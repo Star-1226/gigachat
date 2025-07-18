@@ -1,0 +1,22 @@
+{
+  "name": "kaioken-csr-template",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.4",
+    "vite-plugin-kaioken": "0.21.1"
+  },
+  "dependencies": {
+    "kaioken": "0.43.0"
+  }
+}
