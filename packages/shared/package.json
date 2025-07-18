@@ -1,9 +1,14 @@
 {
-  "name": "gigachat-shared",
+  "name": "shared",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
     "test": "echo \"Error: no test specified\""
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
   }
 }

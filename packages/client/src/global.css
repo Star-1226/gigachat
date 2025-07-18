@@ -9,6 +9,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
   *,
   ::after,
   ::before,
@@ -22,6 +23,4 @@
   background-color: rgb(21 19 19);
   color: #e5e5e5;
   color-scheme: dark;
-  min-height: 100vh;
-  background: radial-gradient(75% 35% at 50% 95%, rgba(220, 20, 60, 0.6) 20%, rgb(21 19 19) 90%);
 }
