@@ -7,7 +7,7 @@ COPY . .
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 RUN pnpm run -r build
 
