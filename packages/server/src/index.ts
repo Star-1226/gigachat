@@ -1,15 +1,31 @@
-import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
+import { serve } from "@hono/node-server"
+import { serveStatic } from "@hono/node-server/serve-static"
+import { Hono } from "hono"
 
 const app = new Hono()
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
+// API routes first - these should not be caught by static middleware
+app.get("/api/hello", (c) => {
+  return c.json({ message: "Hello from Hono API!" })
 })
 
-serve({
-  fetch: app.fetch,
-  port: 3000
-}, (info) => {
-  console.log(`Server is running on http://localhost:${info.port}`)
-})
+// Serve static files with proper configuration
+// The server runs from /app/packages/server, so client files are at ../../client
+app.use(
+  "/*",
+  serveStatic({
+    root: "../../client",
+    index: "index.html",
+  })
+)
+
+serve(
+  {
+    fetch: app.fetch,
+    port: 8787,
+  },
+  (info) => {
+    console.log(`Server is running on http://localhost:${info.port}`)
+    console.log(`Serving static files from ../../client`)
+  }
+)

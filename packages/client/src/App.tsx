@@ -1,6 +1,13 @@
+import { useAsync } from "kaioken"
 import { Counter } from "./components/Counter"
 
 export function App() {
+  useAsync(async () => {
+    const res = await fetch("/api/hello")
+    const data = await res.json()
+    console.log(data)
+  }, [])
+
   return (
     <div className="min-h-screen flex flex-col gap-20 justify-between px-10 py-20">
       <h1 className="text-3xl md:text-4xl md:leading-normal font-bold text-center">
