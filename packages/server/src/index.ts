@@ -10,24 +10,9 @@ const chat = new ChatService()
 const app = new Hono()
 
 let globalUserId = 0
-
-app.get("/sse", async (c) => {
-  console.log("get /SSE")
-  return streamSSE(
-    c,
-    async (stream) => {
-      chat.addSubscriber(stream)
-      stream.onAbort(() => chat.removeSubscriber(stream))
-      let removedResolver: () => void
-      const removedPromise = new Promise<void>((resolve) => {
-        removedResolver = resolve
-      })
-      chat.onSubscriberRemoved(stream, () => removedResolver?.())
-      await removedPromise
-    },
-    async (_err, stream) => chat.removeSubscriber(stream)
-  )
-})
+function createUserName() {
+  return `${randomName()}#${String(++globalUserId).padStart(4, "0")}`
+}
 
 function parseNameCookie(req: HonoRequest<any, any>) {
   const cookie = req.header("Cookie")
@@ -35,10 +20,30 @@ function parseNameCookie(req: HonoRequest<any, any>) {
   return parts?.find((s) => s.startsWith("username="))?.split("=")[1]
 }
 
+app.get("/sse", async (c) => {
+  const name = parseNameCookie(c.req)
+  if (!name) {
+    c.status(400)
+    return c.json({ status: "Not authenticated" })
+  }
+  return streamSSE(
+    c,
+    async (stream) => {
+      chat.addSubscriber(stream, name)
+      stream.onAbort(() => chat.removeSubscriber(stream, name))
+      let removedResolver: () => void
+      const removedPromise = new Promise<void>((resolve) => {
+        removedResolver = resolve
+      })
+      chat.onSubscriberRemoved(stream, () => removedResolver?.())
+      await removedPromise
+    },
+    async (_err, stream) => chat.removeSubscriber(stream, name)
+  )
+})
+
 app.get("/api/connect", async (c) => {
-  const name =
-    parseNameCookie(c.req) ||
-    `${randomName()}#${String(++globalUserId).padStart(3, "0")}`
+  const name = parseNameCookie(c.req) || createUserName()
 
   c.res.headers.set(
     "Set-Cookie",
@@ -48,7 +53,6 @@ app.get("/api/connect", async (c) => {
 })
 
 app.post("/api/chat", async (c) => {
-  console.log("POST /api/chat")
   const name = parseNameCookie(c.req)
   if (!name) {
     c.status(400)
@@ -61,6 +65,11 @@ app.post("/api/chat", async (c) => {
     console.log("Invalid message", body)
     c.status(400)
     return c.json({ status: "Invalid message" })
+  }
+
+  if (!chat.canSendMessage(name)) {
+    c.status(429)
+    return c.json({ status: "Too many messages" })
   }
 
   chat.addMessage({
