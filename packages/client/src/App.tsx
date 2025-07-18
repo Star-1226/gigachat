@@ -10,10 +10,12 @@ export function App() {
       {(name) =>
         !name ? (
           <Button
-            onclick={async () => {
-              const { name } = await connect()
-              username.value = name
-            }}
+            onclick={() =>
+              connect().then(
+                ({ name }) => (username.value = name),
+                () => alert("Failed to connect")
+              )
+            }
           >
             Connect to continue...
           </Button>

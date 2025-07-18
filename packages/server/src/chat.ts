@@ -45,19 +45,6 @@ export class ChatService {
     this.#subsriberRecentMessages.delete(name)
   }
 
-  removeMessage(id: string) {
-    this.#messages = this.#messages.filter((message) => message.id !== id)
-    this.#subscribers.forEach((subscriber) => {
-      subscriber.writeSSE({
-        data: JSON.stringify({
-          type: "remove",
-          id,
-        }),
-        event: "message",
-      })
-    })
-  }
-
   addMessage(message: ChatMessage) {
     this.#messages.push(message)
     setTimeout(() => this.removeMessage(message.id), 10_000)
@@ -78,5 +65,18 @@ export class ChatService {
 
   canSendMessage(name: string) {
     return (this.#subsriberRecentMessages.get(name) ?? 0) < 10
+  }
+
+  private removeMessage(id: string) {
+    this.#messages = this.#messages.filter((message) => message.id !== id)
+    this.#subscribers.forEach((subscriber) => {
+      subscriber.writeSSE({
+        data: JSON.stringify({
+          type: "remove",
+          id,
+        }),
+        event: "message",
+      })
+    })
   }
 }

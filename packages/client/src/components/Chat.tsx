@@ -3,6 +3,7 @@ import { ChatMessage, SSEMessage } from "shared"
 import { useSSE } from "../hooks/useSSE"
 import { sendMessage } from "../api/handlers"
 import { Button } from "./Button"
+import { SendIcon } from "../icons/SendIcon"
 
 type ClientChatMessage = ChatMessage & {
   removed?: boolean
@@ -114,7 +115,7 @@ export function Chat({ name }: { name: string }) {
             className="grow rounded-lg p-2 bg-neutral-800 text-sm"
           />
           <Button disabled={isInputTextInvalid} type="submit">
-            Send
+            <SendIcon />
           </Button>
         </div>
       </form>
