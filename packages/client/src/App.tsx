@@ -1,6 +1,7 @@
-import { For, useRef, useSignal } from "kaioken"
+import { For, Transition, useComputed, useRef, useSignal } from "kaioken"
 import type { ChatMessage, SSEMessage } from "shared"
 import { connect, sendMessage } from "./api/handlers"
+import { Button } from "./components/Button"
 
 function useSingleton<T>(callback: () => T): T {
   const value = useRef<T | null>(null)
@@ -10,6 +11,10 @@ function useSingleton<T>(callback: () => T): T {
     value.current = callback()
   }
   return value.current!
+}
+
+type ClientChatMessage = ChatMessage & {
+  removed?: boolean
 }
 
 function useSSE(config: {
@@ -30,9 +35,13 @@ function useSSE(config: {
 }
 
 export function App() {
-  const messages = useSignal<ChatMessage[]>([])
+  const listRef = useRef<HTMLUListElement>(null)
+  const messages = useSignal<ClientChatMessage[]>([])
   const inputText = useSignal("")
   const username = useSignal("")
+
+  const isInputTextInvalid = useComputed(() => !inputText.value.length)
+
   useSSE({
     path: "/sse",
     onOpen: () => console.log("SSE opened"),
@@ -42,14 +51,19 @@ export function App() {
       switch (parsedMessage.type) {
         case "message":
           messages.value = [...messages.value, parsedMessage.message]
+          listRef.current?.scrollTo(0, listRef.current.scrollHeight)
           break
         case "remove":
-          messages.value = messages.value.filter(
-            (message) => !parsedMessage.messages.includes(message.id)
-          )
+          messages.value = messages.value.map((message) => {
+            if (message.id === parsedMessage.id) {
+              return { ...message, removed: true }
+            }
+            return message
+          })
           break
         case "messages":
           messages.value = parsedMessage.messages
+          listRef.current?.scrollTo(0, listRef.current.scrollHeight)
           break
         default:
           console.warn("Unknown SSE message type", parsedMessage)
@@ -60,22 +74,72 @@ export function App() {
   const name = username.value
   if (!name) {
     return (
-      <button
+      <Button
         onclick={async () => {
           const { name } = await connect()
           username.value = name
         }}
       >
         Connect to continue...
-      </button>
+      </Button>
     )
+  }
+
+  const removeMessage = (id: string) => {
+    messages.value = messages.value.filter((message) => message.id !== id)
   }
 
   return (
     <>
-      <p>Connected as {name}</p>
+      <div className="p-4">
+        <i className="p-2 bg-blue-600 rounded-lg text-sm">
+          Connected as <b>{name}</b>
+        </i>
+      </div>
+      <ul
+        ref={listRef}
+        className="grow px-4 flex flex-col gap-2 w-full overflow-y-auto"
+      >
+        <For
+          each={messages}
+          fallback={<i className="p-2 rounded bg-neutral-800">No messages</i>}
+        >
+          {(message) => (
+            <Transition
+              key={message.id}
+              duration={{ in: 0, out: 300 }}
+              in={!message.removed}
+              initialState="exited"
+              onTransitionEnd={(s) =>
+                s === "exited" && removeMessage(message.id)
+              }
+              element={(state) => {
+                const opacity = state === "entered" ? "1" : "0"
+                const scale = state === "entered" ? "1" : "0"
+                return (
+                  <li
+                    style={{ opacity, scale }}
+                    className={[
+                      "p-2 rounded bg-neutral-800 transition-all duration-300",
+                      "flex flex-col gap-2 items-start",
+                    ].join(" ")}
+                  >
+                    <div className="w-full flex justify-between text-neutral-400">
+                      <small>{message.from}</small>
+                      <small>
+                        {new Date(message.timestamp).toLocaleString()}
+                      </small>
+                    </div>
+                    <p>{message.content}</p>
+                  </li>
+                )
+              }}
+            />
+          )}
+        </For>
+      </ul>
       <form
-        className="flex gap-4"
+        className="flex items-center justify-center w-full p-4"
         onsubmit={async (e) => {
           e.preventDefault()
           try {
@@ -86,14 +150,16 @@ export function App() {
           }
         }}
       >
-        <input bind:value={inputText} />
-        <button type="submit">Send</button>
+        <div className="flex gap-2 w-full bg-neutral-700 p-2 rounded-lg">
+          <input
+            bind:value={inputText}
+            className="grow rounded-lg p-2 bg-neutral-800 text-sm"
+          />
+          <Button disabled={isInputTextInvalid} type="submit">
+            Send
+          </Button>
+        </div>
       </form>
-      <ul>
-        <For each={messages} fallback={<i>No messages</i>}>
-          {(message) => <li>{message.content}</li>}
-        </For>
-      </ul>
     </>
   )
 }

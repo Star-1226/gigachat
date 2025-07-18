@@ -1,40 +1,19 @@
 import type { SSEStreamingApi } from "hono/streaming"
 import type { ChatMessage } from "shared"
 
-const log = (...msgs: any[]) => console.log("[ChatService]", ...msgs)
-
 export class ChatService {
   #messages: ChatMessage[]
   #subscribers: Set<SSEStreamingApi>
-  #removedCallbacks: Map<SSEStreamingApi, () => void>
+  #subscriberRemovedCallbacks: Map<SSEStreamingApi, () => void>
 
   constructor() {
     this.#messages = []
     this.#subscribers = new Set()
-    this.#removedCallbacks = new Map()
-    setInterval(() => {
-      const messagesToRemove = this.#messages.filter(
-        (message) => Date.now() - message.timestamp > 10_000
-      )
-      this.#messages = this.#messages.filter(
-        (message) => !messagesToRemove.includes(message)
-      )
-      //log("remove old messages", messagesToRemove.length)
-      const payload = {
-        data: JSON.stringify({
-          type: "remove",
-          messages: messagesToRemove.map((message) => message.id),
-        }),
-        event: "message",
-      }
-      this.#subscribers.forEach((subscriber) => {
-        subscriber.writeSSE(payload)
-      })
-    }, 1000)
+    this.#subscriberRemovedCallbacks = new Map()
   }
 
   onSubscriberRemoved(subscriber: SSEStreamingApi, callback: () => void) {
-    this.#removedCallbacks.set(subscriber, callback)
+    this.#subscriberRemovedCallbacks.set(subscriber, callback)
   }
 
   addSubscriber(subscriber: SSEStreamingApi) {
@@ -46,18 +25,29 @@ export class ChatService {
       }),
       event: "message",
     })
-    log("add subscriber", this.#subscribers.size)
   }
 
   removeSubscriber(subscriber: SSEStreamingApi) {
-    this.#removedCallbacks.get(subscriber)?.()
+    this.#subscriberRemovedCallbacks.get(subscriber)?.()
     this.#subscribers.delete(subscriber)
-    log("remove subscriber", this.#subscribers.size)
+  }
+
+  removeMessage(id: string) {
+    this.#messages = this.#messages.filter((message) => message.id !== id)
+    this.#subscribers.forEach((subscriber) => {
+      subscriber.writeSSE({
+        data: JSON.stringify({
+          type: "remove",
+          id,
+        }),
+        event: "message",
+      })
+    })
   }
 
   addMessage(message: ChatMessage) {
     this.#messages.push(message)
-    log("add message", message, this.#subscribers.size)
+    setTimeout(() => this.removeMessage(message.id), 10_000)
     this.#subscribers.forEach((subscriber) => {
       subscriber.writeSSE({
         data: JSON.stringify({

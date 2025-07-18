@@ -9,12 +9,13 @@ import { validateChatMessageDTO } from "shared"
 const chat = new ChatService()
 const app = new Hono()
 
+let globalUserId = 0
+
 app.get("/sse", async (c) => {
   console.log("get /SSE")
   return streamSSE(
     c,
     async (stream) => {
-      console.log("stream setup")
       chat.addSubscriber(stream)
       stream.onAbort(() => chat.removeSubscriber(stream))
       let removedResolver: () => void
@@ -24,10 +25,7 @@ app.get("/sse", async (c) => {
       chat.onSubscriberRemoved(stream, () => removedResolver?.())
       await removedPromise
     },
-    async (err, stream) => {
-      console.log("stream error", err)
-      chat.removeSubscriber(stream)
-    }
+    async (_err, stream) => chat.removeSubscriber(stream)
   )
 })
 
@@ -38,7 +36,10 @@ function parseNameCookie(req: HonoRequest<any, any>) {
 }
 
 app.get("/api/connect", async (c) => {
-  const name = parseNameCookie(c.req) || randomName()
+  const name =
+    parseNameCookie(c.req) ||
+    `${randomName()}#${String(++globalUserId).padStart(3, "0")}`
+
   c.res.headers.set(
     "Set-Cookie",
     `username=${name}; Path=/; SameSite=None; Secure; HttpOnly; Max-Age=31536000;`

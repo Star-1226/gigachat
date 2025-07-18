@@ -13,7 +13,7 @@ export type ChatMessageDTO = {
 export type SSEMessage =
   | {
       type: "remove"
-      messages: ChatMessage["id"][]
+      id: ChatMessage["id"]
     }
   | {
       type: "message"
