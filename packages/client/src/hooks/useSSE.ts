@@ -8,7 +8,9 @@ export function useSSE(config: {
 }) {
   const { path, onMessage, onOpen, onError } = config
   return useSingleton((onCleanup) => {
-    const eventSource = new EventSource(path)
+    const eventSource = new EventSource(path, {
+      withCredentials: true,
+    })
     onCleanup(() => eventSource.close())
 
     eventSource.onmessage = (event) => onMessage?.(event.data)

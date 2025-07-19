@@ -4,15 +4,19 @@ import { MAX_MESSAGE_CHARS } from "shared"
 import { sendMessage } from "../../api/handlers"
 import { SendIcon } from "../../icons/SendIcon"
 import { Button } from "../Button"
+import { messages } from "./state"
+import { ClientChatMessage } from "./types"
 
 export function MessageForm() {
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
   const textAreaCtrls = useTextareaAutoSize(textAreaRef)
   const inputText = useSignal("")
-  const inputTextLength = useComputed(() => inputText.value.length)
-  const isInputTextInvalid = useComputed(
-    () => !inputTextLength.value || inputTextLength.value > MAX_MESSAGE_CHARS
-  )
+  const inputTextLength = useComputed(() => inputText.value.trim().length)
+  const isSubmitDisabled = useComputed(() => {
+    const textLength = inputTextLength.value
+
+    return !textLength || textLength > MAX_MESSAGE_CHARS
+  })
   const inputBadgeClass = useComputed(() => {
     const bg =
       inputTextLength.value < MAX_MESSAGE_CHARS
@@ -23,12 +27,37 @@ export function MessageForm() {
 
   const handleSubmitEvent = async (e: Event) => {
     e.preventDefault()
-    if (isInputTextInvalid.value) return
+    if (isSubmitDisabled.peek()) return
+
+    const content = inputText.peek().trim()
+    const localId = crypto.randomUUID()
+
+    const temp: ClientChatMessage = {
+      id: "",
+      role: "user",
+      content,
+      timestamp: Date.now(),
+      from: "You",
+      optimistic: true,
+      localId,
+    }
+
+    messages.value = [...messages.peek(), temp]
+    inputText.value = ""
+    textAreaCtrls.update()
+
     try {
-      await sendMessage(inputText.peek())
-      inputText.value = ""
-      textAreaCtrls.update()
+      const { message } = await sendMessage(content)
+      messages.value = messages.peek().map<ClientChatMessage>((item) => {
+        if (item.localId === localId) {
+          return { ...message, localId } satisfies ClientChatMessage
+        }
+        return item
+      })
     } catch (error) {
+      messages.value = messages
+        .peek()
+        .filter((message) => message.localId !== localId)
       alert(error)
     }
   }
@@ -44,7 +73,7 @@ export function MessageForm() {
             name="message"
             ref={textAreaRef}
             bind:value={inputText}
-            className="grow rounded-lg p-2 bg-neutral-800 text-sm resize-none min-h-full"
+            className="grow rounded-lg p-2 bg-neutral-800 text-sm resize-none min-h-full disabled:opacity-75"
             minLength={1}
             maxLength={MAX_MESSAGE_CHARS}
             onkeypress={(e) => {
@@ -57,7 +86,7 @@ export function MessageForm() {
             {inputTextLength}/{MAX_MESSAGE_CHARS}
           </small>
         </div>
-        <Button disabled={isInputTextInvalid} type="submit">
+        <Button disabled={isSubmitDisabled} type="submit">
           <SendIcon />
         </Button>
       </div>

@@ -1,5 +1,9 @@
 import type { SSEStreamingApi } from "hono/streaming"
-import type { ChatMessage } from "shared"
+import {
+  MESSAGE_EXPIRATION_MS,
+  type ChatMessage,
+  type ChatMessageDTO,
+} from "shared"
 import { randomName } from "./random.js"
 
 type Connection = SSEStreamingApi
@@ -66,16 +70,24 @@ export class ChatService {
     onRemoved()
   }
 
-  addMessage(message: ChatMessage) {
-    const data = this.#namesToUserData.get(message.from)
+  addMessage(name: string, dto: ChatMessageDTO) {
+    const data = this.#namesToUserData.get(name)
     if (!data) return
-
     data.recentMessageCount++
+
+    const message: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      from: name,
+      content: dto.content,
+      timestamp: Date.now(),
+    }
     this.#messages.push(message)
 
-    setTimeout(() => this.removeMessage(message.id), 10_000)
+    setTimeout(() => this.removeMessage(message.id), MESSAGE_EXPIRATION_MS)
 
-    this.#connectionsToUserData.forEach((_, connection) => {
+    this.#connectionsToUserData.forEach((data, connection) => {
+      if (data.name === name) return
       connection.writeSSE({
         data: JSON.stringify({
           type: "message",
@@ -84,6 +96,8 @@ export class ChatService {
         event: "message",
       })
     })
+
+    return message
   }
 
   private removeMessage(id: string) {

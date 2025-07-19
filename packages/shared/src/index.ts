@@ -38,11 +38,11 @@ function isValidMessageDTOShape(message: unknown): message is ChatMessageDTO {
 
 export function validateChatMessageDTO(
   message: unknown
-): [null, string] | [string, null] {
+): [null, ChatMessageDTO] | [string, null] {
   if (!isValidMessageDTOShape(message)) return ["Invalid message shape", null]
 
   if (message.content.length > MAX_MESSAGE_CHARS)
     return [`Message too long (max ${MAX_MESSAGE_CHARS} chars)`, null]
 
-  return [null, message.content]
+  return [null, message]
 }

@@ -1,39 +1,39 @@
-import { useRef, useSignal } from "kaioken"
+import { useRef } from "kaioken"
 import { SSEMessage } from "shared"
 import { useSSE } from "../../hooks/useSSE"
 import { MessageList } from "./MessageList"
-import { ClientChatMessage } from "./types"
 import { MessageForm } from "./MessageForm"
+import { messages } from "./state"
+import { API_URL } from "../../constants"
 
 export function Chat({ name }: { name: string }) {
   const listRef = useRef<HTMLUListElement>(null)
-  const messages = useSignal<ClientChatMessage[]>([])
 
   useSSE({
-    path: "/sse",
+    path: API_URL + "/sse",
     onOpen: () => console.log("SSE opened"),
     onError: (err) => console.log("SSE error", err),
-    onMessage: (message) => {
-      const parsedMessage = JSON.parse(message) as SSEMessage
-      switch (parsedMessage.type) {
+    onMessage: (msg) => {
+      const data = JSON.parse(msg) as SSEMessage
+      switch (data.type) {
         case "message":
-          messages.value = [...messages.value, parsedMessage.message]
+          messages.value = [...messages.peek(), data.message]
           listRef.current?.scrollTo(0, listRef.current.scrollHeight)
           break
         case "remove":
-          messages.value = messages.value.map((message) => {
-            if (message.id === parsedMessage.id) {
+          messages.value = messages.peek().map((message) => {
+            if (message.id === data.id) {
               return { ...message, removed: true }
             }
             return message
           })
           break
         case "messages":
-          messages.value = parsedMessage.messages
+          messages.value = data.messages
           listRef.current?.scrollTo(0, listRef.current.scrollHeight)
           break
         default:
-          console.warn("Unknown SSE message type", parsedMessage)
+          console.warn("Unknown SSE message type", data)
       }
     },
   })
@@ -52,7 +52,7 @@ export function Chat({ name }: { name: string }) {
           {name}
         </i>
       </div>
-      <MessageList messages={messages} userName={name} />
+      <MessageList userName={name} />
       <MessageForm />
     </>
   )

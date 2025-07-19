@@ -5,8 +5,23 @@ import { Hono, type HonoRequest } from "hono"
 import { ChatService } from "./chat.js"
 import { validateChatMessageDTO, MAX_RECENT_MESSAGES } from "shared"
 
+const isProd = process.env.NODE_ENV === "production"
+
 const chat = new ChatService()
 const app = new Hono()
+
+if (!isProd) {
+  await import("hono/cors").then(({ cors }) => {
+    app.use(
+      "*",
+      cors({
+        origin: "http://localhost:5173",
+        allowMethods: ["GET", "POST", "OPTIONS"],
+        credentials: true,
+      })
+    )
+  })
+}
 
 function parseNameCookie(req: HonoRequest<any, any>) {
   const cookie = req.header("Cookie")
@@ -35,16 +50,26 @@ app.get("/sse", async (c) => {
 })
 
 app.get("/api/connect", async (c) => {
+  console.log("connect")
   const name = parseNameCookie(c.req) || chat.createUserName()
 
-  c.res.headers.set(
-    "Set-Cookie",
-    `username=${name}; Path=/; SameSite=None; Secure; HttpOnly; Max-Age=31536000;`
-  )
+  if (isProd) {
+    c.res.headers.set(
+      "Set-Cookie",
+      `username=${name}; Path=/; SameSite=None; Secure; HttpOnly; Max-Age=31536000;`
+    )
+  } else {
+    c.res.headers.set(
+      "Set-Cookie",
+      `username=${name}; Domain=localhost; Path=/; SameSite=Lax; HttpOnly; Max-Age=31536000;`
+    )
+  }
+
   return c.json({ name })
 })
 
 app.post("/api/chat", async (c) => {
+  await new Promise((resolve) => setTimeout(resolve, 1000))
   const name = parseNameCookie(c.req)
   if (!name) {
     c.status(400)
@@ -63,20 +88,14 @@ app.post("/api/chat", async (c) => {
   }
 
   const body = await c.req.json()
-  const [err, content] = validateChatMessageDTO(body)
+  const [err, dto] = validateChatMessageDTO(body)
   if (err !== null) {
     c.status(400)
     return c.json({ status: err })
   }
 
-  chat.addMessage({
-    id: crypto.randomUUID(),
-    role: "user",
-    from: name,
-    content,
-    timestamp: Date.now(),
-  })
-  return c.text("OK", 200)
+  const message = chat.addMessage(name, dto)
+  return c.json({ message })
 })
 
 // API routes first - these should not be caught by static middleware
