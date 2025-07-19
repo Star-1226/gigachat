@@ -1,3 +1,6 @@
+export * from "./constants.js"
+import { MAX_MESSAGE_CHARS } from "./constants.js"
+
 export type ChatMessage = {
   id: string
   role: "user" | "server"
@@ -24,13 +27,22 @@ export type SSEMessage =
       messages: ChatMessage[]
     }
 
-export function validateChatMessageDTO(
-  message: unknown
-): message is ChatMessageDTO {
+function isValidMessageDTOShape(message: unknown): message is ChatMessageDTO {
   return (
     typeof message === "object" &&
     message !== null &&
     "content" in message &&
-    typeof (message as ChatMessageDTO).content === "string"
+    typeof message.content === "string"
   )
+}
+
+export function validateChatMessageDTO(
+  message: unknown
+): [null, string] | [string, null] {
+  if (!isValidMessageDTOShape(message)) return ["Invalid message shape", null]
+
+  if (message.content.length > MAX_MESSAGE_CHARS)
+    return [`Message too long (max ${MAX_MESSAGE_CHARS} chars)`, null]
+
+  return [null, message.content]
 }

@@ -1,36 +1,54 @@
 import type { SSEStreamingApi } from "hono/streaming"
 import type { ChatMessage } from "shared"
+import { randomName } from "./random.js"
+
+type Connection = SSEStreamingApi
+type UserData = {
+  name: string
+  onRemoved: () => void
+  recentMessageCount: number
+}
 
 export class ChatService {
   #messages: ChatMessage[]
-  #subscribers: Set<SSEStreamingApi>
-  #subscriberRemovedCallbacks: Map<SSEStreamingApi, () => void>
-  #subsriberRecentMessages: Map<string, number>
+  #connectionsToUserData: Map<Connection, UserData>
+  #namesToUserData: Map<string, UserData>
+  #globalUserId: number
 
   constructor() {
     this.#messages = []
-    this.#subscribers = new Set()
-    this.#subscriberRemovedCallbacks = new Map()
-    this.#subsriberRecentMessages = new Map()
-
+    this.#connectionsToUserData = new Map()
+    this.#namesToUserData = new Map()
+    this.#globalUserId = 0
     // to limit to 10 messages per minute,
     // we need to drop the count by 1 every 6 seconds
     setInterval(() => {
-      this.#subsriberRecentMessages.forEach((count, name) => {
-        if (count === 0) return
-        this.#subsriberRecentMessages.set(name, count - 1)
+      this.#connectionsToUserData.forEach((data) => {
+        if (data.recentMessageCount === 0) return
+        data.recentMessageCount--
       })
     }, 6000)
   }
 
-  onSubscriberRemoved(subscriber: SSEStreamingApi, callback: () => void) {
-    this.#subscriberRemovedCallbacks.set(subscriber, callback)
+  createUserName() {
+    return `${randomName()}#${String(++this.#globalUserId).padStart(4, "0")}`
   }
 
-  addSubscriber(subscriber: SSEStreamingApi, name: string) {
-    this.#subscribers.add(subscriber)
-    this.#subsriberRecentMessages.set(name, 0)
-    subscriber.writeSSE({
+  getUser(name: string) {
+    return this.#namesToUserData.get(name)
+  }
+
+  createUser(connection: Connection, name: string, onRemoved: () => void) {
+    const data: UserData = {
+      name,
+      onRemoved,
+      recentMessageCount: 0,
+    }
+    this.#connectionsToUserData.set(connection, data)
+    this.#namesToUserData.set(name, data)
+
+    connection.onAbort(() => this.removeUser(connection))
+    connection.writeSSE({
       data: JSON.stringify({
         type: "messages",
         messages: this.#messages,
@@ -39,21 +57,26 @@ export class ChatService {
     })
   }
 
-  removeSubscriber(subscriber: SSEStreamingApi, name: string) {
-    this.#subscriberRemovedCallbacks.get(subscriber)?.()
-    this.#subscribers.delete(subscriber)
-    this.#subsriberRecentMessages.delete(name)
+  removeUser(connection: Connection) {
+    const data = this.#connectionsToUserData.get(connection)
+    if (!data) return
+    const { name, onRemoved } = data
+    this.#connectionsToUserData.delete(connection)
+    this.#namesToUserData.delete(name)
+    onRemoved()
   }
 
   addMessage(message: ChatMessage) {
+    const data = this.#namesToUserData.get(message.from)
+    if (!data) return
+
+    data.recentMessageCount++
     this.#messages.push(message)
+
     setTimeout(() => this.removeMessage(message.id), 10_000)
-    this.#subsriberRecentMessages.set(
-      message.from,
-      (this.#subsriberRecentMessages.get(message.from) ?? 0) + 1
-    )
-    this.#subscribers.forEach((subscriber) => {
-      subscriber.writeSSE({
+
+    this.#connectionsToUserData.forEach((_, connection) => {
+      connection.writeSSE({
         data: JSON.stringify({
           type: "message",
           message,
@@ -63,14 +86,10 @@ export class ChatService {
     })
   }
 
-  canSendMessage(name: string) {
-    return (this.#subsriberRecentMessages.get(name) ?? 0) < 10
-  }
-
   private removeMessage(id: string) {
     this.#messages = this.#messages.filter((message) => message.id !== id)
-    this.#subscribers.forEach((subscriber) => {
-      subscriber.writeSSE({
+    this.#connectionsToUserData.forEach((_, connection) => {
+      connection.writeSSE({
         data: JSON.stringify({
           type: "remove",
           id,

@@ -33,3 +33,12 @@
   height: 100dvh;
   max-height: 100dvh;
 }
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

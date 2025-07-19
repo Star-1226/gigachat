@@ -3,16 +3,10 @@ import { streamSSE } from "hono/streaming"
 import { serveStatic } from "@hono/node-server/serve-static"
 import { Hono, type HonoRequest } from "hono"
 import { ChatService } from "./chat.js"
-import { randomName } from "./random.js"
-import { validateChatMessageDTO } from "shared"
+import { validateChatMessageDTO, MAX_RECENT_MESSAGES } from "shared"
 
 const chat = new ChatService()
 const app = new Hono()
-
-let globalUserId = 0
-function createUserName() {
-  return `${randomName()}#${String(++globalUserId).padStart(4, "0")}`
-}
 
 function parseNameCookie(req: HonoRequest<any, any>) {
   const cookie = req.header("Cookie")
@@ -29,21 +23,19 @@ app.get("/sse", async (c) => {
   return streamSSE(
     c,
     async (stream) => {
-      chat.addSubscriber(stream, name)
-      stream.onAbort(() => chat.removeSubscriber(stream, name))
-      let removedResolver: () => void
-      const removedPromise = new Promise<void>((resolve) => {
-        removedResolver = resolve
+      let onRemovedCallback: () => void
+      const onRemovedPromise = new Promise<void>((resolve) => {
+        onRemovedCallback = resolve
       })
-      chat.onSubscriberRemoved(stream, () => removedResolver?.())
-      await removedPromise
+      chat.createUser(stream, name, () => onRemovedCallback())
+      await onRemovedPromise
     },
-    async (_err, stream) => chat.removeSubscriber(stream, name)
+    async (_err, stream) => chat.removeUser(stream)
   )
 })
 
 app.get("/api/connect", async (c) => {
-  const name = parseNameCookie(c.req) || createUserName()
+  const name = parseNameCookie(c.req) || chat.createUserName()
 
   c.res.headers.set(
     "Set-Cookie",
@@ -59,24 +51,29 @@ app.post("/api/chat", async (c) => {
     return c.json({ status: "Not authenticated" })
   }
 
-  const body = await c.req.json()
-  const isValidDTO = validateChatMessageDTO(body)
-  if (!isValidDTO) {
-    console.log("Invalid message", body)
+  const userData = chat.getUser(name)
+  if (!userData) {
     c.status(400)
-    return c.json({ status: "Invalid message" })
+    return c.json({ status: "Not authenticated" })
   }
 
-  if (!chat.canSendMessage(name)) {
+  if (userData.recentMessageCount >= MAX_RECENT_MESSAGES) {
     c.status(429)
     return c.json({ status: "Too many messages" })
+  }
+
+  const body = await c.req.json()
+  const [err, content] = validateChatMessageDTO(body)
+  if (err !== null) {
+    c.status(400)
+    return c.json({ status: err })
   }
 
   chat.addMessage({
     id: crypto.randomUUID(),
     role: "user",
     from: name,
-    content: body.content,
+    content,
     timestamp: Date.now(),
   })
   return c.text("OK", 200)

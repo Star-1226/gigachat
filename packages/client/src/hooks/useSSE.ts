@@ -7,12 +7,14 @@ export function useSSE(config: {
   onError?: (evt: Event) => void
 }) {
   const { path, onMessage, onOpen, onError } = config
-  return useSingleton(() => {
-    console.log("useSSE - configuring event source")
+  return useSingleton((onCleanup) => {
     const eventSource = new EventSource(path)
+    onCleanup(() => eventSource.close())
+
     eventSource.onmessage = (event) => onMessage?.(event.data)
     eventSource.onopen = () => onOpen?.()
     eventSource.onerror = (e) => onError?.(e)
+
     return eventSource
   })
 }
