@@ -100,6 +100,7 @@ app.use(
 serve(
   {
     fetch: app.fetch,
+    hostname: "0.0.0.0",
     port: 8787,
   },
   (info) => {
