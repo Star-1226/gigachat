@@ -13,7 +13,10 @@ export function App() {
   return (
     <div className="flex flex-col gap-8 md:gap-16">
       <div className="flex flex-col gap-1 md:gap-4">
-        <h1 className="flex gap-4 justify-center text-5xl md:text-8xl">
+        <h1
+          className="flex gap-4 justify-center text-5xl md:text-8xl font-bold "
+          style="view-transition-name: title;"
+        >
           GigaChat{" "}
           <img src="/favicon.svg" alt="GigaChat" className="w-12 md:w-24" />
         </h1>

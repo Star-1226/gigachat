@@ -70,7 +70,10 @@ export function Chat() {
   return (
     <>
       <div className="p-4 flex w-full justify-between">
-        <h1 className="flex gap-2 text-2xl font-bold">
+        <h1
+          className="flex gap-2 text-2xl font-bold"
+          style="view-transition-name: title;"
+        >
           GigaChat
           <img src="/favicon.svg" alt="GigaChat" className="w-6" />
         </h1>
