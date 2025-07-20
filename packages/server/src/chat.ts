@@ -36,15 +36,17 @@ export class ChatService {
     return this.#namesToUserData.get(name)
   }
 
-  createUser(connection: Connection, name: string, onRemoved: () => void) {
+  createUser(
+    connection: Connection,
+    name: string,
+    opts: { onRemoved: () => void }
+  ) {
     const userData: UserData = {
       name,
-      onRemoved,
+      onRemoved: opts.onRemoved,
     }
     this.#connectionsToUserData.set(connection, userData)
     this.#namesToUserData.set(name, userData)
-
-    connection.onAbort(() => this.removeUser(connection))
 
     const messagesPayload = JSON.stringify({
       type: "messages",

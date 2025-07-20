@@ -33,11 +33,21 @@ app.get("/sse", async (c) => {
   return streamSSE(
     c,
     async (stream) => {
+      stream.onAbort(() => {
+        console.log("stream onAbort")
+      })
+      // apparently stream.onAbort doesn't work 🤔😔
+      // https://github.com/honojs/hono/issues/1770
+      c.req.raw.signal.addEventListener("abort", () => {
+        chat.removeUser(stream)
+      })
       let onRemovedCallback: () => void
       const onRemovedPromise = new Promise<void>((resolve) => {
         onRemovedCallback = resolve
       })
-      chat.createUser(stream, name, () => onRemovedCallback())
+      chat.createUser(stream, name, {
+        onRemoved: () => onRemovedCallback(),
+      })
       await onRemovedPromise
     },
     async (_err, stream) => chat.removeUser(stream)
