@@ -56,10 +56,10 @@ export function MessageForm() {
         return item
       })
     } catch (error) {
+      console.error("sendMessage", error)
       messages.value = messages
         .peek()
         .filter((message) => message.localId !== localId)
-      alert(error)
     }
   }
 

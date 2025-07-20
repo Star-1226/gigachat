@@ -1,13 +1,10 @@
+import { Hono } from "hono"
 import { serve } from "@hono/node-server"
 import { streamSSE } from "hono/streaming"
 import { serveStatic } from "@hono/node-server/serve-static"
-import { Hono, type HonoRequest, type MiddlewareHandler } from "hono"
-import { ChatService, type UserData } from "./chat.js"
-import {
-  validateChatMessageDTO,
-  MAX_RECENT_MESSAGES,
-  validateReactionDTO,
-} from "shared"
+import { validateChatMessageDTO, validateReactionDTO } from "shared"
+import { ChatService } from "./chat.js"
+import { getRequestUserData, parseNameCookie } from "./utils.js"
 
 const isProd = process.env.NODE_ENV === "production"
 
@@ -25,28 +22,6 @@ if (!isProd) {
       })
     )
   })
-}
-
-function parseNameCookie(req: HonoRequest<any, any>) {
-  const cookie = req.header("Cookie")
-  const parts = cookie?.split(";").map((s) => s.trim())
-  return parts?.find((s) => s.startsWith("username="))?.split("=")[1]
-}
-
-const getRequestUserData = (
-  req: HonoRequest
-): [string, null] | [null, UserData] => {
-  const name = parseNameCookie(req)
-  if (!name) {
-    return ["Not authenticated", null]
-  }
-
-  const userData = chat.getUser(name)
-  if (!userData) {
-    return ["Not authenticated", null]
-  }
-
-  return [null, userData]
 }
 
 app.get("/sse", async (c) => {
@@ -89,15 +64,10 @@ app.get("/api/connect", async (c) => {
 })
 
 app.post("/api/chat", async (c) => {
-  const [userErr, userData] = getRequestUserData(c.req)
+  const [userErr, userData] = getRequestUserData(c, chat)
   if (userErr !== null) {
-    c.status(400)
-    return c.json({ status: userErr })
-  }
-
-  if (userData.recentMessageCount >= MAX_RECENT_MESSAGES) {
-    c.status(429)
-    return c.json({ status: "Too many messages" })
+    c.status(userErr.code)
+    return c.json({ status: userErr.status })
   }
 
   const body = await c.req.json()
@@ -112,10 +82,10 @@ app.post("/api/chat", async (c) => {
 })
 
 app.post("/api/reaction", async (c) => {
-  const [userErr, userData] = getRequestUserData(c.req)
+  const [userErr, userData] = getRequestUserData(c, chat)
   if (userErr !== null) {
-    c.status(400)
-    return c.json({ status: userErr })
+    c.status(userErr.code)
+    return c.json({ status: userErr.status })
   }
 
   const body = await c.req.json()
@@ -138,10 +108,10 @@ app.post("/api/reaction", async (c) => {
 })
 
 app.delete("/api/reaction", async (c) => {
-  const [userErr, userData] = getRequestUserData(c.req)
+  const [userErr, userData] = getRequestUserData(c, chat)
   if (userErr !== null) {
-    c.status(400)
-    return c.json({ status: userErr })
+    c.status(userErr.code)
+    return c.json({ status: userErr.status })
   }
 
   const body = await c.req.json()

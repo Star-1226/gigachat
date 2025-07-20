@@ -13,7 +13,6 @@ type Connection = SSEStreamingApi
 export type UserData = {
   name: string
   onRemoved: () => void
-  recentMessageCount: number
 }
 
 export class ChatService {
@@ -27,14 +26,6 @@ export class ChatService {
     this.#connectionsToUserData = new Map()
     this.#namesToUserData = new Map()
     this.#globalUserId = 0
-    // to limit to 10 messages per minute,
-    // we need to drop the count by 1 every 6 seconds
-    setInterval(() => {
-      this.#connectionsToUserData.forEach((data) => {
-        if (data.recentMessageCount === 0) return
-        data.recentMessageCount--
-      })
-    }, 6000)
   }
 
   createUserName() {
@@ -49,7 +40,6 @@ export class ChatService {
     const userData: UserData = {
       name,
       onRemoved,
-      recentMessageCount: 0,
     }
     this.#connectionsToUserData.set(connection, userData)
     this.#namesToUserData.set(name, userData)
@@ -79,7 +69,6 @@ export class ChatService {
   addMessage(name: string, dto: ChatMessageDTO) {
     const data = this.#namesToUserData.get(name)
     if (!data) return
-    data.recentMessageCount++
 
     const message: ChatMessage = {
       id: crypto.randomUUID(),
