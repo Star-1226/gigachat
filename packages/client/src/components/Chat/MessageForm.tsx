@@ -6,6 +6,7 @@ import { SendIcon } from "../../icons/SendIcon"
 import { Button } from "../Button"
 import { messages } from "./state"
 import { ClientChatMessage } from "./types"
+import { username } from "../../state"
 
 export function MessageForm() {
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
@@ -37,7 +38,7 @@ export function MessageForm() {
       role: "user",
       content,
       timestamp: Date.now(),
-      from: "You",
+      from: username.peek(),
       optimistic: true,
       reactions: [],
       localId,

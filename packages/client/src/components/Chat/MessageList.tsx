@@ -1,4 +1,4 @@
-import { useRef, For, Transition, useMemo } from "kaioken"
+import { useRef, For, Transition, useMemo, useComputed } from "kaioken"
 import { className as cls } from "kaioken/utils"
 import { emojiListMessageId, messages } from "./state"
 import { username } from "../../state"
@@ -41,20 +41,23 @@ export function MessageList() {
                 state === "entered" ? "0" : message.removed ? "-100%" : "100%"
               const isSelfMessage = message.from === username.peek()
               const content = useMemo(() => formatContent(message), [])
+              const className = useComputed(() => {
+                return cls(
+                  "p-2 rounded transition-all duration-300",
+                  "flex flex-col gap-2 items-start",
+                  isSelfMessage ? "bg-[#212430]" : "bg-neutral-800",
+                  emojiListMessageId.value === message.id && "z-10"
+                )
+              })
 
               return (
                 <li
+                  className={className}
                   style={{
                     opacity,
                     scale,
                     transform: `translateY(${translateY})`,
                   }}
-                  className={cls(
-                    "p-2 rounded transition-all duration-300",
-                    "flex flex-col gap-2 items-start",
-                    isSelfMessage ? "bg-[#212430]" : "bg-neutral-800",
-                    emojiListMessageId.value === message.id && "z-10"
-                  )}
                 >
                   <div className="w-full flex justify-between text-neutral-400">
                     <small>{isSelfMessage ? "You" : message.from}</small>
