@@ -20,9 +20,9 @@ export function MessageForm() {
   const inputBadgeClass = useComputed(() => {
     const bg =
       inputTextLength.value < MAX_MESSAGE_CHARS
-        ? "bg-neutral-900 text-neutral-400"
-        : "bg-red-800 text-neutral-300"
-    return `absolute right-2 bottom-2 leading-none bg-neutral-900 rounded-lg p-1 ${bg}`
+        ? "bg-neutral-800 text-neutral-400"
+        : "bg-[#9d0000] text-neutral-300"
+    return `text-[10px] font-bold leading-none rounded-lg p-1 transition-colors ${bg}`
   })
 
   const handleSubmitEvent = async (e: Event) => {
@@ -69,7 +69,7 @@ export function MessageForm() {
       onsubmit={handleSubmitEvent}
     >
       <div className="flex gap-2 w-full bg-neutral-700 p-2 rounded-lg">
-        <div className="flex grow relative">
+        <div className="flex grow">
           <textarea
             name="message"
             ref={textAreaRef}
@@ -83,12 +83,17 @@ export function MessageForm() {
               }
             }}
           />
-          <small className={inputBadgeClass}>
-            {inputTextLength}/{MAX_MESSAGE_CHARS}
-          </small>
         </div>
-        <Button disabled={isSubmitDisabled} type="submit">
+
+        <Button
+          type="submit"
+          disabled={isSubmitDisabled}
+          className="flex flex-col items-center justify-between gap-2"
+        >
           <SendIcon />
+          <span className={inputBadgeClass}>
+            {inputTextLength}/{MAX_MESSAGE_CHARS}
+          </span>
         </Button>
       </div>
     </form>
