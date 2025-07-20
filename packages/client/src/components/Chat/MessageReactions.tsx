@@ -32,8 +32,23 @@ export function MessageReactions({ message }: MessageReactionsProps) {
   }, [message])
 
   return (
-    <div className="flex gap-2 justify-end">
-      <ul className="flex flex-wrap justify-end gap-2">
+    <div className="flex gap-2">
+      <div className="relative z-10">
+        <button onclick={() => (emojiListMessageId.value = message.id)}>
+          <SmilePlusIcon />
+        </button>
+        <Derive from={emojiListMessageId}>
+          {(id) =>
+            id === message.id && (
+              <EmojiList
+                onEmojiSelect={(kind) => handleReactionClick(message, kind)}
+                dismiss={() => (emojiListMessageId.value = null)}
+              />
+            )
+          }
+        </Derive>
+      </div>
+      <ul className="flex flex-wrap gap-2">
         {Object.entries(reactionsMap).map(([kind, count]) => {
           const selfReaction = selfReactions.find((r) => r.kind === kind)
 
@@ -59,21 +74,6 @@ export function MessageReactions({ message }: MessageReactionsProps) {
           )
         })}
       </ul>
-      <div className="relative z-10">
-        <button onclick={() => (emojiListMessageId.value = message.id)}>
-          <SmilePlusIcon />
-        </button>
-        <Derive from={emojiListMessageId}>
-          {(id) =>
-            id === message.id && (
-              <EmojiList
-                onEmojiSelect={(kind) => handleReactionClick(message, kind)}
-                dismiss={() => (emojiListMessageId.value = null)}
-              />
-            )
-          }
-        </Derive>
-      </div>
     </div>
   )
 }

@@ -12,7 +12,7 @@ export function EmojiList({ onEmojiSelect, dismiss }: EmojiListProps) {
   useClickOutside(ref, dismiss)
 
   return (
-    <div ref={ref} className="absolute right-0 top-0 z-10">
+    <div ref={ref} className="absolute left-0 top-full z-10">
       <ul className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-2 bg-neutral-800 p-1 shadow shadow-neutral-900 rounded">
         {REACTION_EMOJIS.map((emoji) => (
           <li key={emoji}>

@@ -69,7 +69,7 @@ export function MessageList() {
                   </div>
                   <p className="wrap-break-word">{content}</p>
                   {!message.optimistic && (
-                    <div className="flex justify-end w-full">
+                    <div className="flex w-full items-center">
                       <MessageReactions message={message} />
                     </div>
                   )}

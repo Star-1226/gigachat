@@ -7,7 +7,7 @@ import {
   type ReactionEmoji,
   type SSEMessage,
 } from "shared"
-import { randomName } from "./random.js"
+import { randomFarewell, randomGreeting, randomName } from "./random.js"
 
 type Connection = SSEStreamingApi
 export type UserData = {
@@ -70,6 +70,8 @@ export class ChatService {
       type: "+user",
       id: name,
     })
+
+    this.addMessage("GigaChat", { content: randomGreeting(name) }, "server")
   }
 
   removeUser(connection: Connection) {
@@ -79,16 +81,18 @@ export class ChatService {
     this.#connectionsToUserData.delete(connection)
     this.#namesToUserData.delete(name)
     this.broadcast({ type: "-user", id: name })
+    this.addMessage("GigaChat", { content: randomFarewell(name) }, "server")
     onRemoved()
   }
 
-  addMessage(name: string, dto: ChatMessageDTO) {
-    const data = this.#namesToUserData.get(name)
-    if (!data) return
-
+  addMessage(
+    name: string,
+    dto: ChatMessageDTO,
+    role: ChatMessage["role"] = "user"
+  ) {
     const message: ChatMessage = {
       id: crypto.randomUUID(),
-      role: "user",
+      role,
       from: name,
       content: dto.content,
       timestamp: Date.now(),
