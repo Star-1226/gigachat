@@ -1,11 +1,10 @@
 import { useRef, For, Transition } from "kaioken"
 import { className as cls } from "kaioken/utils"
-import { messages } from "./state"
+import { emojiListMessageId, messages } from "./state"
+import { username } from "../../state"
+import { MessageReactions } from "./MessageReactions"
 
-type MessageListProps = {
-  userName: string
-}
-export function MessageList({ userName }: MessageListProps) {
+export function MessageList() {
   const listRef = useRef<HTMLUListElement>(null)
   const removeMessage = (id: string, localId?: string) => {
     messages.value = messages
@@ -39,7 +38,7 @@ export function MessageList({ userName }: MessageListProps) {
               const scale = state === "entered" ? "1" : "0.75"
               const translateY =
                 state === "entered" ? "0" : message.removed ? "-100%" : "100%"
-              const isSelfMessage = message.from === userName
+              const isSelfMessage = message.from === username.peek()
 
               return (
                 <li
@@ -51,7 +50,8 @@ export function MessageList({ userName }: MessageListProps) {
                   className={cls(
                     "p-2 rounded transition-all duration-300",
                     "flex flex-col gap-2 items-start",
-                    isSelfMessage ? "bg-[#212430]" : "bg-neutral-800"
+                    isSelfMessage ? "bg-[#212430]" : "bg-neutral-800",
+                    emojiListMessageId.value === message.id && "z-10"
                   )}
                 >
                   <div className="w-full flex justify-between text-neutral-400">
@@ -63,6 +63,11 @@ export function MessageList({ userName }: MessageListProps) {
                     </small>
                   </div>
                   <p className="wrap-break-word">{message.content}</p>
+                  {!message.optimistic && (
+                    <div className="flex justify-end w-full">
+                      <MessageReactions message={message} />
+                    </div>
+                  )}
                 </li>
               )
             }}

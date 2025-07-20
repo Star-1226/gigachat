@@ -5,8 +5,9 @@ import { MessageList } from "./MessageList"
 import { MessageForm } from "./MessageForm"
 import { messages } from "./state"
 import { API_URL } from "../../constants"
+import { username } from "../../state"
 
-export function Chat({ name }: { name: string }) {
+export function Chat() {
   const listRef = useRef<HTMLUListElement>(null)
 
   useSSE({
@@ -32,6 +33,34 @@ export function Chat({ name }: { name: string }) {
           messages.value = data.messages
           listRef.current?.scrollTo(0, listRef.current.scrollHeight)
           break
+        case "+reaction":
+          messages.value = messages.peek().map((message) => {
+            if (message.id === data.id) {
+              return {
+                ...message,
+                reactions: [...message.reactions, data.reaction],
+              }
+            }
+            return message
+          })
+          break
+        case "-reaction":
+          messages.value = messages.peek().map((message) => {
+            if (message.id === data.id) {
+              return {
+                ...message,
+                reactions: message.reactions.filter(
+                  (reaction) =>
+                    !(
+                      reaction.from === data.reaction.from &&
+                      reaction.kind === data.reaction.kind
+                    )
+                ),
+              }
+            }
+            return message
+          })
+          break
         default:
           console.warn("Unknown SSE message type", data)
       }
@@ -47,12 +76,12 @@ export function Chat({ name }: { name: string }) {
         </h1>
         <i
           className="p-2 bg-[#2b4f9e] rounded-lg text-sm font-bold"
-          title={`Connected as ${name}`}
+          title={`Connected as ${username}`}
         >
-          {name}
+          {username}
         </i>
       </div>
-      <MessageList userName={name} />
+      <MessageList />
       <MessageForm />
     </>
   )

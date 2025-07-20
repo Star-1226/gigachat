@@ -39,6 +39,7 @@ export function MessageForm() {
       timestamp: Date.now(),
       from: "You",
       optimistic: true,
+      reactions: [],
       localId,
     }
 
@@ -47,7 +48,7 @@ export function MessageForm() {
     textAreaCtrls.update()
 
     try {
-      const { message } = await sendMessage(content)
+      const { message } = await sendMessage({ content })
       messages.value = messages.peek().map<ClientChatMessage>((item) => {
         if (item.localId === localId) {
           return { ...message, localId } satisfies ClientChatMessage

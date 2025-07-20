@@ -1,13 +1,14 @@
-import { useState, useViewTransition } from "kaioken"
+import { useViewTransition } from "kaioken"
 import { connect } from "./api/handlers"
 import { Button } from "./components/Button"
 import { Chat } from "./components/Chat"
+import { username } from "./state"
 
 export function App() {
   const transition = useViewTransition()
-  const [username, setUsername] = useState("")
-  if (username) {
-    return <Chat name={username} />
+  const name = username.value
+  if (name) {
+    return <Chat />
   }
   return (
     <div className="flex flex-col gap-8 md:gap-16">
@@ -24,7 +25,7 @@ export function App() {
       <Button
         onclick={() =>
           connect().then(
-            ({ name }) => transition(() => setUsername(name)),
+            ({ name }) => transition(() => (username.value = name)),
             () => alert("Failed to connect")
           )
         }
