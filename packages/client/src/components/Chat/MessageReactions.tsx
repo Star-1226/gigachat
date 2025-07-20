@@ -32,32 +32,34 @@ export function MessageReactions({ message }: MessageReactionsProps) {
   }, [message])
 
   return (
-    <ul className="flex flex-wrap gap-2">
-      {Object.entries(reactionsMap).map(([kind, count]) => {
-        const selfReaction = selfReactions.find((r) => r.kind === kind)
+    <div className="flex gap-2 justify-end">
+      <ul className="flex flex-wrap justify-end gap-2">
+        {Object.entries(reactionsMap).map(([kind, count]) => {
+          const selfReaction = selfReactions.find((r) => r.kind === kind)
 
-        return (
-          <li key={kind}>
-            <button
-              className={cls(
-                "flex items-center gap-1 rounded-lg border",
-                selfReaction
-                  ? `border-blue-500 text-blue-400 bg-blue-300/12.5 hover:bg-blue-300/20 ${
-                      selfReaction.optimistic ? "" : ""
-                    }`
-                  : "border-white/5 bg-white/2.5 hover:bg-white/7.5"
-              )}
-              onclick={() =>
-                handleReactionClick(message, kind as ReactionEmoji)
-              }
-            >
-              <span>{kind}</span>
-              <span className="text-xs pr-1 font-medium">{count}</span>
-            </button>
-          </li>
-        )
-      })}
-      <li className="relative z-10">
+          return (
+            <li key={kind}>
+              <button
+                className={cls(
+                  "flex items-center gap-1 rounded-lg border",
+                  selfReaction
+                    ? `border-blue-500 text-blue-400 bg-blue-300/12.5 hover:bg-blue-300/20 ${
+                        selfReaction.optimistic ? "" : ""
+                      }`
+                    : "border-white/5 bg-white/2.5 hover:bg-white/7.5"
+                )}
+                onclick={() =>
+                  handleReactionClick(message, kind as ReactionEmoji)
+                }
+              >
+                <span>{kind}</span>
+                <span className="text-xs pr-1 font-medium">{count}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      <div className="relative z-10">
         <button onclick={() => (emojiListMessageId.value = message.id)}>
           <SmilePlusIcon />
         </button>
@@ -71,8 +73,8 @@ export function MessageReactions({ message }: MessageReactionsProps) {
             )
           }
         </Derive>
-      </li>
-    </ul>
+      </div>
+    </div>
   )
 }
 
