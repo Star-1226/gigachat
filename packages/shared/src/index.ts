@@ -93,6 +93,18 @@ export type SSEMessage =
       id: ChatMessage["id"]
       reaction: Reaction
     }
+  | {
+      type: "users"
+      users: string[]
+    }
+  | {
+      type: "+user"
+      id: string
+    }
+  | {
+      type: "-user"
+      id: string
+    }
 
 function isValidMessageDTOShape(message: unknown): message is ChatMessageDTO {
   return (

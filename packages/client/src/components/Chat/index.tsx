@@ -1,14 +1,24 @@
-import { useRef } from "kaioken"
+import { Derive, For, signal, useRef } from "kaioken"
 import { SSEMessage } from "shared"
 import { useSSE } from "../../hooks/useSSE"
 import { MessageList } from "./MessageList"
 import { MessageForm } from "./MessageForm"
-import { messages } from "./state"
+import { messages, otherUsers, users } from "./state"
 import { API_URL } from "../../constants"
 import { username } from "../../state"
+import { Button } from "../Button"
+import { CircleIcon } from "../../icons/CircleIcon"
+import { useClickOutside } from "@kaioken-core/hooks"
+
+const showUsersList = signal(false)
 
 export function Chat() {
-  const listRef = useRef<HTMLUListElement>(null)
+  const messageListRef = useRef<HTMLUListElement>(null)
+  const usersListRef = useRef<HTMLDivElement>(null)
+  const userButtonRef = useRef<HTMLButtonElement>(null)
+  useClickOutside(usersListRef, () => (showUsersList.value = false), {
+    ignore: [userButtonRef],
+  })
 
   useSSE({
     path: API_URL + "/sse",
@@ -19,7 +29,10 @@ export function Chat() {
       switch (data.type) {
         case "message":
           messages.value = [...messages.peek(), data.message]
-          listRef.current?.scrollTo(0, listRef.current.scrollHeight)
+          messageListRef.current?.scrollTo(
+            0,
+            messageListRef.current.scrollHeight
+          )
           break
         case "remove":
           messages.value = messages.peek().map((message) => {
@@ -31,7 +44,10 @@ export function Chat() {
           break
         case "messages":
           messages.value = data.messages
-          listRef.current?.scrollTo(0, listRef.current.scrollHeight)
+          messageListRef.current?.scrollTo(
+            0,
+            messageListRef.current.scrollHeight
+          )
           break
         case "+reaction":
           messages.value = messages.peek().map((message) => {
@@ -61,6 +77,15 @@ export function Chat() {
             return message
           })
           break
+        case "users":
+          users.value = data.users
+          break
+        case "+user":
+          users.value = [...users.peek(), data.id]
+          break
+        case "-user":
+          users.value = users.peek().filter((user) => user !== data.id)
+          break
         default:
           console.warn("Unknown SSE message type", data)
       }
@@ -77,12 +102,42 @@ export function Chat() {
           GigaChat
           <img src="/favicon.svg" alt="GigaChat" className="w-6" />
         </h1>
-        <i
-          className="p-2 bg-[#2b4f9e] rounded-lg text-sm font-bold"
-          title={`Connected as ${username}`}
-        >
-          {username}
-        </i>
+        <div className="relative">
+          <Button
+            ref={userButtonRef}
+            onclick={() => (showUsersList.value = !showUsersList.peek())}
+            title={`Connected as ${username}`}
+            className="flex gap-1"
+          >
+            <CircleIcon fill="currentColor" className="text-green-500 w-3" />
+            {username}
+          </Button>
+          <Derive from={showUsersList}>
+            {(show) =>
+              !show ? null : (
+                <div
+                  ref={usersListRef}
+                  className="absolute right-0 bottom-0-0 z-10 w-full"
+                >
+                  <ul className="bg-neutral-800 p-1 shadow shadow-neutral-900 rounded text-neutral-300 text-sm">
+                    <For
+                      each={otherUsers}
+                      fallback={
+                        <li className="text-xs p-2">No users online</li>
+                      }
+                    >
+                      {(user) =>
+                        user === username.peek() ? null : (
+                          <li className="text-xs p-2">{user}</li>
+                        )
+                      }
+                    </For>
+                  </ul>
+                </div>
+              )
+            }
+          </Derive>
+        </div>
       </div>
       <MessageList />
       <MessageForm />

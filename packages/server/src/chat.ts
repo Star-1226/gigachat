@@ -46,14 +46,29 @@ export class ChatService {
 
     connection.onAbort(() => this.removeUser(connection))
 
-    const payload = JSON.stringify({
+    const messagesPayload = JSON.stringify({
       type: "messages",
       messages: this.#messages,
     } satisfies SSEMessage)
 
     connection.writeSSE({
-      data: payload,
+      data: messagesPayload,
       event: "message",
+    })
+
+    const usersPayload = JSON.stringify({
+      type: "users",
+      users: Array.from(this.#namesToUserData.keys()),
+    } satisfies SSEMessage)
+
+    connection.writeSSE({
+      data: usersPayload,
+      event: "message",
+    })
+
+    this.broadcastWithExclude(name, {
+      type: "+user",
+      id: name,
     })
   }
 
@@ -63,6 +78,7 @@ export class ChatService {
     const { name, onRemoved } = data
     this.#connectionsToUserData.delete(connection)
     this.#namesToUserData.delete(name)
+    this.broadcast({ type: "-user", id: name })
     onRemoved()
   }
 
@@ -82,17 +98,9 @@ export class ChatService {
 
     setTimeout(() => this.removeMessage(message.id), MESSAGE_EXPIRATION_MS)
 
-    const payload = JSON.stringify({
+    this.broadcastWithExclude(name, {
       type: "message",
       message,
-    } satisfies SSEMessage)
-
-    this.#connectionsToUserData.forEach((data, connection) => {
-      if (data.name === name) return
-      connection.writeSSE({
-        data: payload,
-        event: "message",
-      })
     })
 
     return message
@@ -118,19 +126,10 @@ export class ChatService {
     }
 
     message.reactions.push(reaction)
-
-    const payload = JSON.stringify({
+    this.broadcastWithExclude(userData.name, {
       type: "+reaction",
       id: messageId,
       reaction,
-    } satisfies SSEMessage)
-
-    this.#connectionsToUserData.forEach((data, connection) => {
-      if (data.name === userData.name) return
-      connection.writeSSE({
-        data: payload,
-        event: "message",
-      })
     })
 
     return [null, reaction]
@@ -154,32 +153,32 @@ export class ChatService {
     })
     if (!reaction) return
 
-    const payload = JSON.stringify({
+    this.broadcastWithExclude(userData.name, {
       type: "-reaction",
       id: messageId,
       reaction,
-    } satisfies SSEMessage)
-
-    this.#connectionsToUserData.forEach((data, connection) => {
-      if (data.name === userData.name) return
-      connection.writeSSE({
-        data: payload,
-        event: "message",
-      })
     })
   }
 
   private removeMessage(id: string) {
     this.#messages = this.#messages.filter((message) => message.id !== id)
+    this.broadcast({ type: "remove", id })
+  }
 
-    const payload = JSON.stringify({
-      type: "remove",
-      id,
-    } satisfies SSEMessage)
-
+  private broadcast(payload: SSEMessage) {
     this.#connectionsToUserData.forEach((_, connection) => {
       connection.writeSSE({
-        data: payload,
+        data: JSON.stringify(payload),
+        event: "message",
+      })
+    })
+  }
+
+  private broadcastWithExclude(exclude: string, payload: SSEMessage) {
+    this.#connectionsToUserData.forEach((data, connection) => {
+      if (data.name === exclude) return
+      connection.writeSSE({
+        data: JSON.stringify(payload),
         event: "message",
       })
     })
