@@ -39,6 +39,12 @@ export class ChatService {
     this.#messages = []
     this.#connectionsToUserData = new Map()
     this.#namesToUserData = new Map()
+    // this.#namesToUserData = new Map(
+    //   Array.from({ length: 100 }).map((asd, i) => [
+    //     `user-${i}`,
+    //     { name: `user-${i}`, onRemoved: () => {} },
+    //   ])
+    // )
     this.#globalUserId = 0
   }
 

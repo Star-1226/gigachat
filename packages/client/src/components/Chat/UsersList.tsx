@@ -30,7 +30,7 @@ export function UsersList() {
           !show ? null : (
             <div
               ref={usersListRef}
-              className="absolute right-0 bottom-0-0 z-10 min-w-full"
+              className="absolute right-0 bottom-0-0 z-10 min-w-full max-h-[calc(100dvh-168px)] overflow-y-auto"
             >
               <ul className="bg-neutral-800 p-1 shadow shadow-neutral-900 rounded text-neutral-300 text-sm">
                 <For
