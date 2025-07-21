@@ -59,7 +59,6 @@ export function validateReactionDTO(
 
 export type ChatMessage = {
   id: string
-  role: "user" | "server"
   content: string
   timestamp: number
   from: string

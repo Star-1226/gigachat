@@ -1,14 +1,14 @@
-import { useAppContext } from "kaioken"
-import { PROTOCOL_VERSION, SSEMessageWithVersion } from "shared"
+import { useAppContext, useEffect } from "kaioken"
 import { MessageList } from "./MessageList"
 import { MessageForm } from "./MessageForm"
-import { messageListElement, messages, users } from "./state"
+import { messageListElement, messages, unreadMessages, users } from "./state"
 import { UsersList } from "./UsersList"
-import { API_URL } from "../../constants"
-import { useSingleton } from "../../hooks/useSingleton"
+import { notify, prepareNotifications } from "./notification"
+import { onEventSourceMessage } from "../../state"
 
 export function Chat() {
   const ctx = useAppContext()
+
   const scrollToBottom = () => {
     ctx.scheduler?.nextIdle(() => {
       const el = messageListElement.peek()
@@ -16,29 +16,30 @@ export function Chat() {
     })
   }
 
-  useSingleton((onCleanup) => {
-    const eventSource = new EventSource(API_URL + "/sse", {
-      withCredentials: true,
-    })
+  useEffect(prepareNotifications, [])
 
-    eventSource.onmessage = (msg) => {
-      const data: SSEMessageWithVersion = JSON.parse(msg.data)
-      if (data.v !== PROTOCOL_VERSION) {
-        alert("New version released. Reloading...")
-        return window.location.reload()
-      }
+  useEffect(() => {
+    return onEventSourceMessage((data) => {
       switch (data.type) {
         case "message":
           messages.value = [...messages.peek(), data.message]
           scrollToBottom()
+          if (document.visibilityState === "hidden") {
+            unreadMessages.value = [...unreadMessages.peek(), data.message.id]
+            notify(data.message.id, `${data.message.from}`, {
+              body: data.message.content,
+              badge: "/favicon.svg",
+              silent: true,
+            })
+          }
           break
         case "remove":
-          messages.value = messages.peek().map((message) => {
-            if (message.id === data.id) {
-              return { ...message, removed: true }
-            }
-            return message
+          messages.value = messages.peek().filter((message) => {
+            return message.id !== data.id
           })
+          unreadMessages.value = unreadMessages
+            .peek()
+            .filter((id) => id !== data.id)
           break
         case "messages":
           messages.value = data.messages
@@ -84,12 +85,8 @@ export function Chat() {
         default:
           console.warn("Unknown SSE message type", data)
       }
-    }
-    eventSource.onopen = () => console.log("SSE opened")
-    eventSource.onerror = (e) => console.log("SSE error", e)
-
-    onCleanup(() => eventSource.close())
-  })
+    })
+  }, [])
 
   return (
     <>

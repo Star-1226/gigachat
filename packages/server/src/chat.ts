@@ -2,6 +2,7 @@ import type { SSEStreamingApi } from "hono/streaming"
 import {
   MESSAGE_EXPIRATION_MS,
   PROTOCOL_VERSION,
+  SERVER_USER_NAME,
   type ChatMessage,
   type ChatMessageDTO,
   type Reaction,
@@ -87,7 +88,7 @@ export class ChatService {
       id: name,
     })
 
-    this.addMessage("GigaChat", { content: randomGreeting(name) }, "server")
+    this.addMessage(SERVER_USER_NAME, { content: randomGreeting(name) })
   }
 
   removeUser(connection: Connection) {
@@ -97,18 +98,13 @@ export class ChatService {
     this.#connectionsToUserData.delete(connection)
     this.#namesToUserData.delete(name)
     this.broadcast({ type: "-user", id: name })
-    this.addMessage("GigaChat", { content: randomFarewell(name) }, "server")
+    this.addMessage(SERVER_USER_NAME, { content: randomFarewell(name) })
     onRemoved()
   }
 
-  addMessage(
-    name: string,
-    dto: ChatMessageDTO,
-    role: ChatMessage["role"] = "user"
-  ) {
+  addMessage(name: string, dto: ChatMessageDTO) {
     const message: ChatMessage = {
       id: crypto.randomUUID(),
-      role,
       from: name,
       content: dto.content,
       timestamp: Date.now(),

@@ -21,6 +21,7 @@ export function UsersList() {
         onclick={() => (showUsersList.value = !showUsersList.peek())}
         title={`Connected as ${username}`}
         className="flex gap-1"
+        style="view-transition-name: user-button;"
       >
         <CircleIcon fill="currentColor" className="text-green-500 w-3" />
         {username}

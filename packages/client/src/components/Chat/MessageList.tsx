@@ -1,11 +1,4 @@
-import {
-  ElementProps,
-  For,
-  StyleObject,
-  Transition,
-  unwrap,
-  useComputed,
-} from "kaioken"
+import { ElementProps, For, StyleObject, unwrap, useComputed } from "kaioken"
 import { className as cls } from "kaioken/utils"
 import {
   addUserRefToTextArea,
@@ -17,16 +10,9 @@ import {
 import { username } from "../../state"
 import { MessageReactions } from "./MessageReactions"
 import { ClientChatMessage } from "./types"
+import { SERVER_USER_NAME } from "shared"
 
 export function MessageList() {
-  const removeMessage = (id: string, localId?: string) => {
-    messages.value = messages
-      .peek()
-      .filter(
-        (message) =>
-          (id && message.id !== id) || (localId && message.localId !== localId)
-      )
-  }
   return (
     <ul
       ref={messageListElement}
@@ -34,79 +20,68 @@ export function MessageList() {
     >
       <For
         each={messages}
-        fallback={<i className="p-2 rounded bg-[#1a1a1a]">No messages</i>}
+        fallback={
+          <MessageListItem className="bg-[#1a1a1a]">
+            <i>No messages</i>
+          </MessageListItem>
+        }
       >
-        {(message) => (
-          <Transition
-            key={message.localId ? `temp:${message.localId}` : message.id}
-            duration={{ in: 0, out: 300 }}
-            in={!message.removed}
-            initialState="exited"
-            onTransitionEnd={(s) =>
-              s === "exited" && removeMessage(message.id, message.localId)
-            }
-            element={(state) => {
-              const opacity =
-                state === "entered" ? (message.optimistic ? "0.5" : "1") : "0"
-              const scale = state === "entered" ? "1" : "0.75"
-              const translateY =
-                state === "entered" ? "0" : message.removed ? "-100%" : "100%"
+        {(message) => {
+          const content = formatContent(message)
+          const style: StyleObject = {
+            zIndex: emojiPickerMessageId.value === message.id ? 10 : 0,
+            opacity: message.optimistic ? "0.5" : "1",
+          }
 
-              const style: StyleObject = {
-                opacity,
-                scale,
-                transform: `translateY(${translateY})`,
-                zIndex: emojiPickerMessageId.value === message.id ? 10 : 0,
-              }
+          if (message.from === SERVER_USER_NAME) {
+            return (
+              <MessageListItem
+                key={message.id}
+                className="bg-[#1a1a1a]"
+                style={style}
+              >
+                <p className="wrap-break-word font-extralight text-neutral-200">
+                  {content}
+                </p>
+              </MessageListItem>
+            )
+          }
 
-              const content = formatContent(message)
+          const isSelfMessage = message.from === username.peek()
 
-              const isServerMessage = message.from === "GigaChat"
-              if (isServerMessage) {
-                return (
-                  <MessageListItem className="bg-[#1a1a1a]" style={style}>
-                    <p className="wrap-break-word font-extralight text-neutral-200">
-                      {content}
-                    </p>
-                  </MessageListItem>
-                )
-              }
-
-              const isSelfMessage = message.from === username.peek()
-              return (
-                <MessageListItem
-                  className={isSelfMessage ? "bg-[#212430]" : "bg-neutral-800"}
-                  style={style}
-                >
-                  <div className="w-full flex justify-between text-neutral-400">
-                    {isSelfMessage ? (
-                      <small>You</small>
-                    ) : (
-                      <button
-                        className="text-xs hover:text-blue-500"
-                        title={message.from}
-                        onclick={() => addUserRefToTextArea(message.from)}
-                      >
-                        {message.from}
-                      </button>
-                    )}
-                    <small>
-                      {message.optimistic
-                        ? "Sending..."
-                        : new Date(message.timestamp).toLocaleString()}
-                    </small>
-                  </div>
-                  <p className="wrap-break-word font-extralight text-neutral-200">
-                    {content}
-                  </p>
-                  <div className="flex w-full items-center">
-                    <MessageReactions message={message} />
-                  </div>
-                </MessageListItem>
-              )
-            }}
-          />
-        )}
+          return (
+            <MessageListItem
+              key={message.localId ? `temp:${message.localId}` : message.id}
+              className={isSelfMessage ? "bg-[#212430]" : "bg-neutral-800"}
+              style={style}
+            >
+              <div className="w-full flex justify-between text-neutral-400">
+                {isSelfMessage ? (
+                  <small>You</small>
+                ) : (
+                  <button
+                    className="text-xs hover:text-blue-500"
+                    title={message.from}
+                    onclick={() => addUserRefToTextArea(message.from)}
+                  >
+                    {message.from}
+                  </button>
+                )}
+                <small>
+                  {message.optimistic
+                    ? "Sending..."
+                    : new Date(message.timestamp).toLocaleString()}
+                </small>
+              </div>
+              <p className="wrap-break-word font-extralight text-neutral-200">
+                {content}
+              </p>
+              <div className="flex w-full items-center">
+                <MessageReactions message={message} />
+              </div>
+            </MessageListItem>
+          )
+        }}
       </For>
     </ul>
   )

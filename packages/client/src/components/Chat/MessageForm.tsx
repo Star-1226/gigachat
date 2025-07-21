@@ -39,7 +39,6 @@ export function MessageForm({ onMessageAdded }: MessageFormProps) {
 
     const temp: ClientChatMessage = {
       id: "",
-      role: "user",
       content,
       timestamp: Date.now(),
       from: username.peek(),

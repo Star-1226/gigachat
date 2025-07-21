@@ -2,7 +2,7 @@ import { API_URL } from "../constants"
 import { ClientChatMessage } from "../components/Chat/types"
 import { ChatMessageDTO, Reaction, ReactionDTO } from "shared"
 
-export async function connect(): Promise<{ name: string }> {
+export async function authenticate(): Promise<{ name: string }> {
   const response = await fetch(API_URL + "/api/connect", {
     credentials: "include",
   })
