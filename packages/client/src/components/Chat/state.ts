@@ -20,9 +20,13 @@ export function addUserRefToTextArea(username: string) {
     formEl = formElement.peek()
   if (!txtAreaEl || !formEl) return
 
-  let toAdd = `@${username}`
   const currentValue = txtAreaEl.value
-  if (currentValue.length || !currentValue.endsWith(" ")) toAdd = ` ${toAdd}`
+  let toAdd = `@${username} `
+
+  // if there's non-whitespace characters at the end, add a space
+  if (currentValue.length && currentValue.trimEnd() === currentValue) {
+    toAdd = ` ${toAdd}`
+  }
 
   if (currentValue.length + toAdd.length > MAX_MESSAGE_CHARS) return
 
