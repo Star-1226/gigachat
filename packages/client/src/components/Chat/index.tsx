@@ -1,38 +1,36 @@
-import { Derive, For, signal, useRef } from "kaioken"
-import { SSEMessage } from "shared"
-import { useSSE } from "../../hooks/useSSE"
+import { useAppContext } from "kaioken"
+import { PROTOCOL_VERSION, SSEMessageWithVersion } from "shared"
 import { MessageList } from "./MessageList"
 import { MessageForm } from "./MessageForm"
-import { messages, otherUsers, users } from "./state"
+import { messageListElement, messages, users } from "./state"
+import { UsersList } from "./UsersList"
 import { API_URL } from "../../constants"
-import { username } from "../../state"
-import { Button } from "../Button"
-import { CircleIcon } from "../../icons/CircleIcon"
-import { useClickOutside } from "@kaioken-core/hooks"
-
-const showUsersList = signal(false)
+import { useSingleton } from "../../hooks/useSingleton"
 
 export function Chat() {
-  const messageListRef = useRef<HTMLUListElement>(null)
-  const usersListRef = useRef<HTMLDivElement>(null)
-  const userButtonRef = useRef<HTMLButtonElement>(null)
-  useClickOutside(usersListRef, () => (showUsersList.value = false), {
-    ignore: [userButtonRef],
-  })
+  const ctx = useAppContext()
+  const scrollToBottom = () => {
+    ctx.scheduler?.nextIdle(() => {
+      const el = messageListElement.peek()
+      el?.scrollTo(0, el.scrollHeight)
+    })
+  }
 
-  useSSE({
-    path: API_URL + "/sse",
-    onOpen: () => console.log("SSE opened"),
-    onError: (err) => console.log("SSE error", err),
-    onMessage: (msg) => {
-      const data = JSON.parse(msg) as SSEMessage
+  useSingleton((onCleanup) => {
+    const eventSource = new EventSource(API_URL + "/sse", {
+      withCredentials: true,
+    })
+
+    eventSource.onmessage = (msg) => {
+      const data: SSEMessageWithVersion = JSON.parse(msg.data)
+      if (data.v !== PROTOCOL_VERSION) {
+        alert("New version released. Reloading...")
+        return window.location.reload()
+      }
       switch (data.type) {
         case "message":
           messages.value = [...messages.peek(), data.message]
-          messageListRef.current?.scrollTo(
-            0,
-            messageListRef.current.scrollHeight
-          )
+          scrollToBottom()
           break
         case "remove":
           messages.value = messages.peek().map((message) => {
@@ -44,10 +42,7 @@ export function Chat() {
           break
         case "messages":
           messages.value = data.messages
-          messageListRef.current?.scrollTo(
-            0,
-            messageListRef.current.scrollHeight
-          )
+          scrollToBottom()
           break
         case "+reaction":
           messages.value = messages.peek().map((message) => {
@@ -89,7 +84,11 @@ export function Chat() {
         default:
           console.warn("Unknown SSE message type", data)
       }
-    },
+    }
+    eventSource.onopen = () => console.log("SSE opened")
+    eventSource.onerror = (e) => console.log("SSE error", e)
+
+    onCleanup(() => eventSource.close())
   })
 
   return (
@@ -102,45 +101,10 @@ export function Chat() {
           GigaChat
           <img src="/favicon.svg" alt="GigaChat" className="w-6" />
         </h1>
-        <div className="relative">
-          <Button
-            ref={userButtonRef}
-            onclick={() => (showUsersList.value = !showUsersList.peek())}
-            title={`Connected as ${username}`}
-            className="flex gap-1"
-          >
-            <CircleIcon fill="currentColor" className="text-green-500 w-3" />
-            {username}
-          </Button>
-          <Derive from={showUsersList}>
-            {(show) =>
-              !show ? null : (
-                <div
-                  ref={usersListRef}
-                  className="absolute right-0 bottom-0-0 z-10 w-full"
-                >
-                  <ul className="bg-neutral-800 p-1 shadow shadow-neutral-900 rounded text-neutral-300 text-sm">
-                    <For
-                      each={otherUsers}
-                      fallback={
-                        <li className="text-xs p-2">No users online</li>
-                      }
-                    >
-                      {(user) =>
-                        user === username.peek() ? null : (
-                          <li className="text-xs p-2">{user}</li>
-                        )
-                      }
-                    </For>
-                  </ul>
-                </div>
-              )
-            }
-          </Derive>
-        </div>
+        <UsersList />
       </div>
       <MessageList />
-      <MessageForm />
+      <MessageForm onMessageAdded={scrollToBottom} />
     </>
   )
 }

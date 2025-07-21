@@ -1,12 +1,11 @@
-import { useRef, For, Transition, useMemo, useComputed } from "kaioken"
+import { For, Transition, useMemo } from "kaioken"
 import { className as cls } from "kaioken/utils"
-import { emojiListMessageId, messages } from "./state"
+import { emojiPickerMessageId, messageListElement, messages } from "./state"
 import { username } from "../../state"
 import { MessageReactions } from "./MessageReactions"
 import { ClientChatMessage } from "./types"
 
 export function MessageList() {
-  const listRef = useRef<HTMLUListElement>(null)
   const removeMessage = (id: string, localId?: string) => {
     messages.value = messages
       .peek()
@@ -17,7 +16,7 @@ export function MessageList() {
   }
   return (
     <ul
-      ref={listRef}
+      ref={messageListElement}
       className="grow px-4 flex flex-col gap-2 w-full overflow-y-auto"
     >
       <For
@@ -41,22 +40,19 @@ export function MessageList() {
                 state === "entered" ? "0" : message.removed ? "-100%" : "100%"
               const isSelfMessage = message.from === username.peek()
               const content = useMemo(() => formatContent(message), [])
-              const className = useComputed(() => {
-                return cls(
-                  "p-2 rounded transition-all duration-300",
-                  "flex flex-col gap-2 items-start",
-                  isSelfMessage ? "bg-[#212430]" : "bg-neutral-800",
-                  emojiListMessageId.value === message.id && "z-10"
-                )
-              })
 
               return (
                 <li
-                  className={className}
+                  className={cls(
+                    "p-2 rounded transition-all duration-300",
+                    "flex flex-col gap-2 items-start",
+                    isSelfMessage ? "bg-[#212430]" : "bg-neutral-800"
+                  )}
                   style={{
                     opacity,
                     scale,
                     transform: `translateY(${translateY})`,
+                    zIndex: emojiPickerMessageId.value === message.id ? 10 : 0,
                   }}
                 >
                   <div className="w-full flex justify-between text-neutral-400">
@@ -67,12 +63,12 @@ export function MessageList() {
                         : new Date(message.timestamp).toLocaleString()}
                     </small>
                   </div>
-                  <p className="wrap-break-word">{content}</p>
-                  {!message.optimistic && (
-                    <div className="flex w-full items-center">
-                      <MessageReactions message={message} />
-                    </div>
-                  )}
+                  <p className="wrap-break-word font-light text-neutral-200">
+                    {content}
+                  </p>
+                  <div className="flex w-full items-center">
+                    <MessageReactions message={message} />
+                  </div>
                 </li>
               )
             }}
@@ -129,10 +125,14 @@ function formatContent(message: ClientChatMessage) {
 
     const value = raw.slice(match.start, match.end)
     if (match.type === "mention") {
-      parts.push(<span className="text-rose-400">{value}</span>)
+      parts.push(<span className="text-rose-400 font-medium">{value}</span>)
     } else if (match.type === "link") {
       parts.push(
-        <a className="text-blue-500" href={value} target="_blank">
+        <a
+          className="text-blue-500 font-medium underline"
+          href={value}
+          target="_blank"
+        >
           {value}
         </a>
       )

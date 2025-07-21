@@ -8,7 +8,11 @@ import { messages } from "./state"
 import { ClientChatMessage } from "./types"
 import { username } from "../../state"
 
-export function MessageForm() {
+type MessageFormProps = {
+  onMessageAdded: () => void
+}
+
+export function MessageForm({ onMessageAdded }: MessageFormProps) {
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
   const textAreaCtrls = useTextareaAutoSize(textAreaRef)
   const inputText = useSignal("")
@@ -47,6 +51,7 @@ export function MessageForm() {
     messages.value = [...messages.peek(), temp]
     inputText.value = ""
     textAreaCtrls.update()
+    onMessageAdded()
 
     try {
       const { message } = await sendMessage({ content })

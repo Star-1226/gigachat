@@ -106,6 +106,10 @@ export type SSEMessage =
       id: string
     }
 
+export type SSEMessageWithVersion = SSEMessage & {
+  v: number
+}
+
 function isValidMessageDTOShape(message: unknown): message is ChatMessageDTO {
   return (
     typeof message === "object" &&

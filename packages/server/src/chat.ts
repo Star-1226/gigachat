@@ -1,11 +1,13 @@
 import type { SSEStreamingApi } from "hono/streaming"
 import {
   MESSAGE_EXPIRATION_MS,
+  PROTOCOL_VERSION,
   type ChatMessage,
   type ChatMessageDTO,
   type Reaction,
   type ReactionEmoji,
   type SSEMessage,
+  type SSEMessageWithVersion,
 } from "shared"
 import { randomFarewell, randomGreeting, randomName } from "./random.js"
 
@@ -13,6 +15,18 @@ type Connection = SSEStreamingApi
 export type UserData = {
   name: string
   onRemoved: () => void
+}
+
+function formatMessage<T extends SSEMessage>(
+  message: T
+): { data: string; event: "message" } {
+  return {
+    data: JSON.stringify({
+      ...message,
+      v: PROTOCOL_VERSION,
+    } satisfies SSEMessageWithVersion),
+    event: "message",
+  }
 }
 
 export class ChatService {
@@ -48,25 +62,19 @@ export class ChatService {
     this.#connectionsToUserData.set(connection, userData)
     this.#namesToUserData.set(name, userData)
 
-    const messagesPayload = JSON.stringify({
-      type: "messages",
-      messages: this.#messages,
-    } satisfies SSEMessage)
+    connection.writeSSE(
+      formatMessage({
+        type: "messages",
+        messages: this.#messages,
+      })
+    )
 
-    connection.writeSSE({
-      data: messagesPayload,
-      event: "message",
-    })
-
-    const usersPayload = JSON.stringify({
-      type: "users",
-      users: Array.from(this.#namesToUserData.keys()),
-    } satisfies SSEMessage)
-
-    connection.writeSSE({
-      data: usersPayload,
-      event: "message",
-    })
+    connection.writeSSE(
+      formatMessage({
+        type: "users",
+        users: Array.from(this.#namesToUserData.keys()),
+      })
+    )
 
     this.broadcastWithExclude(name, {
       type: "+user",
@@ -172,21 +180,17 @@ export class ChatService {
   }
 
   private broadcast(payload: SSEMessage) {
+    const msg = formatMessage(payload)
     this.#connectionsToUserData.forEach((_, connection) => {
-      connection.writeSSE({
-        data: JSON.stringify(payload),
-        event: "message",
-      })
+      connection.writeSSE(msg)
     })
   }
 
   private broadcastWithExclude(exclude: string, payload: SSEMessage) {
+    const msg = formatMessage(payload)
     this.#connectionsToUserData.forEach((data, connection) => {
       if (data.name === exclude) return
-      connection.writeSSE({
-        data: JSON.stringify(payload),
-        event: "message",
-      })
+      connection.writeSSE(msg)
     })
   }
 }

@@ -6,10 +6,9 @@ import { username } from "./state"
 
 export function App() {
   const transition = useViewTransition()
-  const name = username.value
-  if (name) {
-    return <Chat />
-  }
+
+  if (username.value) return <Chat />
+
   return (
     <div className="flex flex-col gap-8 md:gap-16">
       <div className="flex flex-col gap-1 md:gap-4">

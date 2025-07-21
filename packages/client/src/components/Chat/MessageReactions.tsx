@@ -1,4 +1,4 @@
-import { Derive, useMemo } from "kaioken"
+import { Derive, Portal, useMemo, useRef, useViewTransition } from "kaioken"
 import { className as cls } from "kaioken/utils"
 import { ReactionEmoji } from "shared"
 import {
@@ -7,14 +7,16 @@ import {
 } from "../../api/handlers"
 import { SmilePlusIcon } from "../../icons/SmilePlusIcon"
 import { username } from "../../state"
-import { emojiListMessageId, messages } from "./state"
+import { emojiPickerMessageId, messages } from "./state"
 import { ClientChatMessage, ClientReaction } from "./types"
-import { EmojiList } from "./EmojiList"
+import { EmojiPicker } from "./EmojiPicker"
 
 type MessageReactionsProps = {
   message: ClientChatMessage
 }
 export function MessageReactions({ message }: MessageReactionsProps) {
+  const transition = useViewTransition()
+  const btnRef = useRef<HTMLButtonElement>(null)
   const { reactionsMap, selfReactions } = useMemo(() => {
     const reactionsMap = message.reactions.reduce((acc, reaction) => {
       acc[reaction.kind] = (acc[reaction.kind] || 0) + 1
@@ -33,21 +35,40 @@ export function MessageReactions({ message }: MessageReactionsProps) {
 
   return (
     <div className="flex gap-2">
-      <div className="relative z-10">
-        <button onclick={() => (emojiListMessageId.value = message.id)}>
-          <SmilePlusIcon />
-        </button>
-        <Derive from={emojiListMessageId}>
-          {(id) =>
-            id === message.id && (
-              <EmojiList
+      <button
+        ref={btnRef}
+        className={cls(
+          "rounded-full p-1 text-neutral-300",
+          "hover:bg-blue-300/25 focus:bg-blue-300/25",
+          "hover:text-neutral-200 focus:text-neutral-200"
+        )}
+        disabled={message.optimistic}
+        onclick={() => {
+          transition(() => {
+            if (emojiPickerMessageId.value === message.id) {
+              emojiPickerMessageId.value = null
+              return
+            }
+            emojiPickerMessageId.value = message.id
+          })
+        }}
+      >
+        <SmilePlusIcon />
+      </button>
+      <Derive from={emojiPickerMessageId}>
+        {(id) =>
+          id === message.id && (
+            <Portal container={() => document.getElementById("portal-root")!}>
+              <EmojiPicker
+                messageId={message.id}
+                anchorRef={btnRef}
                 onEmojiSelect={(kind) => handleReactionClick(message, kind)}
-                dismiss={() => (emojiListMessageId.value = null)}
+                dismiss={() => (emojiPickerMessageId.value = null)}
               />
-            )
-          }
-        </Derive>
-      </div>
+            </Portal>
+          )
+        }
+      </Derive>
       <ul className="flex flex-wrap gap-2">
         {Object.entries(reactionsMap).map(([kind, count]) => {
           const selfReaction = selfReactions.find((r) => r.kind === kind)
@@ -56,7 +77,7 @@ export function MessageReactions({ message }: MessageReactionsProps) {
             <li key={kind}>
               <button
                 className={cls(
-                  "flex items-center gap-1 rounded-lg border",
+                  "flex items-center gap-1 rounded-lg border px-1",
                   selfReaction
                     ? `border-blue-500 text-blue-400 bg-blue-300/12.5 hover:bg-blue-300/20 ${
                         selfReaction.optimistic ? "" : ""
@@ -67,8 +88,8 @@ export function MessageReactions({ message }: MessageReactionsProps) {
                   handleReactionClick(message, kind as ReactionEmoji)
                 }
               >
-                <span>{kind}</span>
-                <span className="text-xs pr-1 font-medium">{count}</span>
+                <span className="text-lg">{kind}</span>
+                <span className="text-xs font-medium">{count}</span>
               </button>
             </li>
           )
@@ -82,7 +103,7 @@ async function handleReactionClick(
   message: ClientChatMessage,
   kind: ReactionEmoji
 ) {
-  emojiListMessageId.value = null
+  emojiPickerMessageId.value = null
   const existingReaction = message.reactions.find(
     (reaction) => reaction.kind === kind && reaction.from === username.peek()
   )
