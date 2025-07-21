@@ -1,10 +1,10 @@
 import { useTextareaAutoSize } from "@kaioken-core/hooks"
-import { useRef, useSignal, useComputed } from "kaioken"
+import { useRef, useSignal, useComputed, useCallback } from "kaioken"
 import { MAX_MESSAGE_CHARS } from "shared"
 import { sendMessage } from "../../api/handlers"
 import { SendIcon } from "../../icons/SendIcon"
 import { Button } from "../Button"
-import { messages } from "./state"
+import { formElement, messages, textAreaElement } from "./state"
 import { ClientChatMessage } from "./types"
 import { username } from "../../state"
 
@@ -13,7 +13,7 @@ type MessageFormProps = {
 }
 
 export function MessageForm({ onMessageAdded }: MessageFormProps) {
-  const textAreaRef = useRef<HTMLTextAreaElement>(null)
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
   const textAreaCtrls = useTextareaAutoSize(textAreaRef)
   const inputText = useSignal("")
   const inputTextLength = useComputed(() => inputText.value.trim().length)
@@ -69,16 +69,22 @@ export function MessageForm({ onMessageAdded }: MessageFormProps) {
     }
   }
 
+  const bindTextAreaRef = useCallback((el: HTMLTextAreaElement | null) => {
+    textAreaRef.current = el
+    textAreaElement.value = el
+  }, [])
+
   return (
     <form
-      className="flex items-center justify-center w-full p-4"
+      ref={formElement}
+      className="flex items-center justify-center w-full p-4 transition-all"
       onsubmit={handleSubmitEvent}
     >
       <div className="flex gap-2 w-full bg-neutral-700 p-2 rounded-lg">
         <div className="flex grow">
           <textarea
             name="message"
-            ref={textAreaRef}
+            ref={bindTextAreaRef}
             bind:value={inputText}
             className="grow rounded-lg p-2 bg-neutral-800 text-sm resize-none min-h-full disabled:opacity-75"
             minLength={1}

@@ -12,7 +12,7 @@ import { messageListElement, messages } from "./state"
 type EmojiListProps = {
   messageId: string
   onEmojiSelect: (kind: ReactionEmoji) => void
-  dismiss: () => void
+  dismiss: (e: Event) => void
   anchorRef: Kaioken.RefObject<HTMLButtonElement>
 }
 
@@ -53,6 +53,7 @@ export function EmojiPicker({
       styles.value = {
         top: `${top}px`,
         left: `${anchorRect.left}px`,
+        viewTransitionName: "emoji-picker",
       }
     }
 

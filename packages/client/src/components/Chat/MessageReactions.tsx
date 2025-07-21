@@ -36,6 +36,7 @@ export function MessageReactions({ message }: MessageReactionsProps) {
   return (
     <div className="flex gap-2">
       <button
+        data-name="emoji-picker-toggle"
         ref={btnRef}
         className={cls(
           "rounded-full p-1 text-neutral-300",
@@ -63,7 +64,20 @@ export function MessageReactions({ message }: MessageReactionsProps) {
                 messageId={message.id}
                 anchorRef={btnRef}
                 onEmojiSelect={(kind) => handleReactionClick(message, kind)}
-                dismiss={() => (emojiPickerMessageId.value = null)}
+                dismiss={(e) => {
+                  /**
+                   * the clickoutside handler already ignores btnRef.
+                   * if we're clicking on another emoji picker, there's
+                   * no need to set emojiPickerMessageId to null.
+                   */
+                  if (
+                    e.target instanceof HTMLButtonElement &&
+                    e.target.dataset.name === "emoji-picker-toggle"
+                  ) {
+                    return
+                  }
+                  transition(() => (emojiPickerMessageId.value = null))
+                }}
               />
             </Portal>
           )

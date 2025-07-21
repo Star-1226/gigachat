@@ -1,6 +1,19 @@
-import { For, Transition, useMemo } from "kaioken"
+import {
+  ElementProps,
+  For,
+  StyleObject,
+  Transition,
+  unwrap,
+  useComputed,
+} from "kaioken"
 import { className as cls } from "kaioken/utils"
-import { emojiPickerMessageId, messageListElement, messages } from "./state"
+import {
+  addUserRefToTextArea,
+  emojiPickerMessageId,
+  messageListElement,
+  messages,
+  users,
+} from "./state"
 import { username } from "../../state"
 import { MessageReactions } from "./MessageReactions"
 import { ClientChatMessage } from "./types"
@@ -21,7 +34,7 @@ export function MessageList() {
     >
       <For
         each={messages}
-        fallback={<i className="p-2 rounded bg-neutral-800">No messages</i>}
+        fallback={<i className="p-2 rounded bg-[#1a1a1a]">No messages</i>}
       >
         {(message) => (
           <Transition
@@ -38,38 +51,58 @@ export function MessageList() {
               const scale = state === "entered" ? "1" : "0.75"
               const translateY =
                 state === "entered" ? "0" : message.removed ? "-100%" : "100%"
-              const isSelfMessage = message.from === username.peek()
-              const content = useMemo(() => formatContent(message), [])
 
+              const style: StyleObject = {
+                opacity,
+                scale,
+                transform: `translateY(${translateY})`,
+                zIndex: emojiPickerMessageId.value === message.id ? 10 : 0,
+              }
+
+              const content = formatContent(message)
+
+              const isServerMessage = message.from === "GigaChat"
+              if (isServerMessage) {
+                return (
+                  <MessageListItem className="bg-[#1a1a1a]" style={style}>
+                    <p className="wrap-break-word font-extralight text-neutral-200">
+                      {content}
+                    </p>
+                  </MessageListItem>
+                )
+              }
+
+              const isSelfMessage = message.from === username.peek()
               return (
-                <li
-                  className={cls(
-                    "p-2 rounded transition-all duration-300",
-                    "flex flex-col gap-2 items-start",
-                    isSelfMessage ? "bg-[#212430]" : "bg-neutral-800"
-                  )}
-                  style={{
-                    opacity,
-                    scale,
-                    transform: `translateY(${translateY})`,
-                    zIndex: emojiPickerMessageId.value === message.id ? 10 : 0,
-                  }}
+                <MessageListItem
+                  className={isSelfMessage ? "bg-[#212430]" : "bg-neutral-800"}
+                  style={style}
                 >
                   <div className="w-full flex justify-between text-neutral-400">
-                    <small>{isSelfMessage ? "You" : message.from}</small>
+                    {isSelfMessage ? (
+                      <small>You</small>
+                    ) : (
+                      <button
+                        className="text-xs hover:text-blue-500"
+                        title={message.from}
+                        onclick={() => addUserRefToTextArea(message.from)}
+                      >
+                        {message.from}
+                      </button>
+                    )}
                     <small>
                       {message.optimistic
                         ? "Sending..."
                         : new Date(message.timestamp).toLocaleString()}
                     </small>
                   </div>
-                  <p className="wrap-break-word font-light text-neutral-200">
+                  <p className="wrap-break-word font-extralight text-neutral-200">
                     {content}
                   </p>
                   <div className="flex w-full items-center">
                     <MessageReactions message={message} />
                   </div>
-                </li>
+                </MessageListItem>
               )
             }}
           />
@@ -80,31 +113,27 @@ export function MessageList() {
 }
 
 function formatContent(message: ClientChatMessage) {
-  let raw = message.content as string
+  const raw = message.content as string
   const parts: JSX.Children[] = []
 
   const selfRefStr = `@${username.peek()}`
+  const mentionRegex = /@[\w]+#\d{4}/g
   const linkRegex = /https:\/\/\S+/g
 
-  let lastIndex = 0
-
-  // Combine all highlights into one pass: mentions and links
   const matches: {
     start: number
     end: number
     type: "mention" | "link"
+    value: string
   }[] = []
 
-  if (message.from !== username.peek()) {
-    let idx = raw.indexOf(selfRefStr)
-    while (idx !== -1) {
-      matches.push({
-        start: idx,
-        end: idx + selfRefStr.length,
-        type: "mention",
-      })
-      idx = raw.indexOf(selfRefStr, idx + 1)
-    }
+  for (const match of raw.matchAll(mentionRegex)) {
+    matches.push({
+      start: match.index!,
+      end: match.index! + match[0].length,
+      type: "mention",
+      value: match[0],
+    })
   }
 
   for (const match of raw.matchAll(linkRegex)) {
@@ -112,28 +141,36 @@ function formatContent(message: ClientChatMessage) {
       start: match.index!,
       end: match.index! + match[0].length,
       type: "link",
+      value: match[0],
     })
   }
 
-  // Sort by position so we can slice safely
   matches.sort((a, b) => a.start - b.start)
+
+  let lastIndex = 0
 
   for (const match of matches) {
     if (match.start > lastIndex) {
       parts.push(raw.slice(lastIndex, match.start))
     }
 
-    const value = raw.slice(match.start, match.end)
     if (match.type === "mention") {
-      parts.push(<span className="text-rose-400 font-medium">{value}</span>)
+      const isSelf = match.value === selfRefStr
+      if (isSelf) {
+        parts.push(
+          <span className={"text-rose-400 font-medium"}>{match.value}</span>
+        )
+      } else {
+        parts.push(<UserReferenceButton username={match.value.substring(1)} />)
+      }
     } else if (match.type === "link") {
       parts.push(
         <a
           className="text-blue-500 font-medium underline"
-          href={value}
+          href={match.value}
           target="_blank"
         >
-          {value}
+          {match.value}
         </a>
       )
     }
@@ -141,10 +178,45 @@ function formatContent(message: ClientChatMessage) {
     lastIndex = match.end
   }
 
-  // Remaining text after last match
   if (lastIndex < raw.length) {
     parts.push(raw.slice(lastIndex))
   }
 
   return parts
+}
+
+function MessageListItem({ className, ...props }: ElementProps<"li">) {
+  return (
+    <li
+      className={cls(
+        "p-2 rounded transition-all duration-300 flex flex-col gap-2 items-start",
+        unwrap(className)
+      )}
+      {...props}
+    />
+  )
+}
+
+type UserReferenceButtonProps = {
+  username: string
+}
+function UserReferenceButton({ username }: UserReferenceButtonProps) {
+  const isOffline = useComputed(() => !users.value.includes(username))
+  const className = useComputed(() => {
+    const color = isOffline.value ? "text-neutral-500" : "text-violet-400"
+    return `${color} font-medium transition-colors`
+  })
+  const title = useComputed(() => {
+    return isOffline.value ? `${username} is offline` : `Message ${username}`
+  })
+  return (
+    <button
+      disabled={isOffline}
+      title={title}
+      className={className}
+      onclick={() => addUserRefToTextArea(username)}
+    >
+      @{username}
+    </button>
+  )
 }
