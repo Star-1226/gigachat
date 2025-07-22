@@ -1,14 +1,10 @@
 import { Hono } from "hono"
 import { serve } from "@hono/node-server"
-import { streamSSE } from "hono/streaming"
 import { serveStatic } from "@hono/node-server/serve-static"
-import { validateChatMessageDTO, validateReactionDTO } from "shared"
-import { ChatService } from "./chat.js"
-import { getRequestUserData, parseNameCookie } from "./utils.js"
+import SSERouter from "./routers/sse.js"
+import APIRouter from "./routers/api.js"
+import { isProd } from "./env.js"
 
-const isProd = process.env.NODE_ENV === "production"
-
-const chat = new ChatService()
 const app = new Hono()
 
 if (!isProd) {
@@ -24,120 +20,8 @@ if (!isProd) {
   })
 }
 
-app.get("/sse", async (c) => {
-  const name = parseNameCookie(c.req)
-  if (!name) {
-    c.status(400)
-    return c.json({ status: "Not authenticated" })
-  }
-  return streamSSE(
-    c,
-    async (stream) => {
-      stream.onAbort(() => {
-        console.log("stream onAbort")
-      })
-      // apparently stream.onAbort doesn't work 🤔😔
-      // https://github.com/honojs/hono/issues/1770
-      c.req.raw.signal.addEventListener("abort", () => {
-        chat.removeUser(stream)
-      })
-      let onRemovedCallback: () => void
-      const onRemovedPromise = new Promise<void>((resolve) => {
-        onRemovedCallback = resolve
-      })
-      chat.createUser(stream, name, {
-        onRemoved: () => onRemovedCallback(),
-      })
-      await onRemovedPromise
-    },
-    async (_err, stream) => chat.removeUser(stream)
-  )
-})
-
-app.get("/api/auth", async (c) => {
-  console.log("auth")
-  const name = parseNameCookie(c.req) || chat.createUserName()
-
-  if (isProd) {
-    c.res.headers.set(
-      "Set-Cookie",
-      `username=${name}; Path=/; SameSite=None; Secure; HttpOnly; Max-Age=31536000;`
-    )
-  } else {
-    c.res.headers.set(
-      "Set-Cookie",
-      `username=${name}; Domain=localhost; Path=/; SameSite=Lax; HttpOnly; Max-Age=31536000;`
-    )
-  }
-
-  return c.json({ name })
-})
-
-app.post("/api/chat", async (c) => {
-  const [userErr, userData] = getRequestUserData(c, chat)
-  if (userErr !== null) {
-    c.status(userErr.code)
-    return c.json({ status: userErr.status })
-  }
-
-  const body = await c.req.json()
-  const [err, dto] = validateChatMessageDTO(body)
-  if (err !== null) {
-    c.status(400)
-    return c.json({ status: err })
-  }
-
-  const message = chat.addMessage(userData.name, dto)
-  return c.json({ message })
-})
-
-app.post("/api/reaction", async (c) => {
-  const [userErr, userData] = getRequestUserData(c, chat)
-  if (userErr !== null) {
-    c.status(userErr.code)
-    return c.json({ status: userErr.status })
-  }
-
-  const body = await c.req.json()
-  const [err, dto] = validateReactionDTO(body)
-  if (err !== null) {
-    c.status(400)
-    return c.json({ status: err })
-  }
-
-  const [reactionErr, reaction] = chat.reactToMessage(
-    userData,
-    dto.messageId,
-    dto.kind
-  )
-  if (reactionErr !== null) {
-    c.status(400)
-    return c.json({ status: reactionErr })
-  }
-  return c.json({ reaction })
-})
-
-app.delete("/api/reaction", async (c) => {
-  const [userErr, userData] = getRequestUserData(c, chat)
-  if (userErr !== null) {
-    c.status(userErr.code)
-    return c.json({ status: userErr.status })
-  }
-
-  const body = await c.req.json()
-  const [err, dto] = validateReactionDTO(body)
-  if (err !== null) {
-    c.status(400)
-    return c.json({ status: err })
-  }
-
-  chat.removeMessageReaction(userData, dto.messageId, dto.kind)
-
-  return c.json({ status: "OK" })
-})
-
-// API routes first - these should not be caught by static middleware
-app.get("/api/health", (c) => c.json({ status: "OK" }))
+app.route("/", SSERouter)
+app.route("/", APIRouter)
 
 // Serve static files with proper configuration
 // The server runs from /app/packages/server, so client files are at ../../client

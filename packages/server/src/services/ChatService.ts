@@ -10,7 +10,7 @@ import {
   type SSEMessage,
   type SSEMessageWithVersion,
 } from "shared"
-import { randomFarewell, randomGreeting, randomName } from "./random.js"
+import { randomFarewell, randomGreeting, randomName } from "../random.js"
 
 type Connection = SSEStreamingApi
 export type UserData = {
@@ -196,3 +196,5 @@ export class ChatService {
     })
   }
 }
+
+export default new ChatService()
