@@ -1,9 +1,9 @@
 import { API_URL } from "../constants"
-import { ClientChatMessage } from "../components/Chat/types"
+import { ClientChatMessage } from "$/types"
 import { ChatMessageDTO, Reaction, ReactionDTO } from "shared"
 
 export async function authenticate(): Promise<{ name: string }> {
-  const response = await fetch(API_URL + "/api/connect", {
+  const response = await fetch(API_URL + "/api/auth", {
     credentials: "include",
   })
   return response.json()

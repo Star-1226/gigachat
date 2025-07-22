@@ -1,10 +1,16 @@
 import { useAppContext, useEffect } from "kaioken"
 import { MessageList } from "./MessageList"
 import { MessageForm } from "./MessageForm"
-import { messageListElement, messages, unreadMessages, users } from "./state"
 import { UsersList } from "./UsersList"
-import { notify, prepareNotifications } from "./notification"
-import { onEventSourceMessage } from "../../state"
+import {
+  notify,
+  prepareNotifications,
+  onEventSourceMessage,
+  messageListElement,
+  messages,
+  unreadMessages,
+  users,
+} from "$/state"
 
 export function Chat() {
   const ctx = useAppContext()

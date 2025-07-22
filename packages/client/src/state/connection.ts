@@ -1,6 +1,6 @@
 import { signal } from "kaioken"
-import { API_URL } from "./constants"
-import { authenticate } from "./api/handlers"
+import { API_URL } from "../constants"
+import { authenticate } from "../api/handlers"
 import { PROTOCOL_VERSION, SSEMessageWithVersion } from "shared"
 
 export enum ConnectionState {

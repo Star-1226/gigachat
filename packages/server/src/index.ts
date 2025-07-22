@@ -54,8 +54,8 @@ app.get("/sse", async (c) => {
   )
 })
 
-app.get("/api/connect", async (c) => {
-  console.log("connect")
+app.get("/api/auth", async (c) => {
+  console.log("auth")
   const name = parseNameCookie(c.req) || chat.createUserName()
 
   if (isProd) {

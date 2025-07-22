@@ -1,12 +1,11 @@
 import { useTextareaAutoSize } from "@kaioken-core/hooks"
 import { useRef, useSignal, useComputed, useCallback } from "kaioken"
 import { MAX_MESSAGE_CHARS } from "shared"
-import { sendMessage } from "../../api/handlers"
-import { SendIcon } from "../../icons/SendIcon"
+import { sendMessage } from "$/api/handlers"
+import { SendIcon } from "$/icons/SendIcon"
 import { Button } from "../Button"
-import { formElement, messages, textAreaElement } from "./state"
-import { ClientChatMessage } from "./types"
-import { username } from "../../state"
+import { formElement, messages, textAreaElement, username } from "$/state"
+import { ClientChatMessage } from "$/types"
 
 type MessageFormProps = {
   onMessageAdded: () => void

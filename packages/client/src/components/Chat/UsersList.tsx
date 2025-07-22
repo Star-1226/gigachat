@@ -1,10 +1,10 @@
 import { useClickOutside } from "@kaioken-core/hooks"
 import { useRef, Derive, For, useSignal } from "kaioken"
 
-import { CircleIcon } from "../../icons/CircleIcon"
-import { username } from "../../state"
+import { username, otherUsers } from "$/state"
+import { CircleIcon } from "$/icons/CircleIcon"
 import { Button } from "../Button"
-import { otherUsers, addUserRefToTextArea } from "./state"
+import { addUserRefToTextArea } from "./utils"
 
 export function UsersList() {
   const showUsersList = useSignal(false)

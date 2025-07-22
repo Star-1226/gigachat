@@ -1,16 +1,16 @@
 import { ElementProps, For, StyleObject, unwrap, useComputed } from "kaioken"
 import { className as cls } from "kaioken/utils"
+import { SERVER_USER_NAME } from "shared"
 import {
-  addUserRefToTextArea,
   emojiPickerMessageId,
   messageListElement,
   messages,
   users,
-} from "./state"
-import { username } from "../../state"
+  username,
+} from "$/state"
+import { ClientChatMessage } from "$/types"
 import { MessageReactions } from "./MessageReactions"
-import { ClientChatMessage } from "./types"
-import { SERVER_USER_NAME } from "shared"
+import { addUserRefToTextArea } from "./utils"
 
 export function MessageList() {
   return (

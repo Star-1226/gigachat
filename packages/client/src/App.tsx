@@ -6,7 +6,7 @@ import {
   connectionError,
   ConnectionState,
   connectionState,
-} from "./state"
+} from "./state/connection"
 
 export function App() {
   const transition = useViewTransition()

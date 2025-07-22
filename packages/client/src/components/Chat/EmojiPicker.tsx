@@ -7,7 +7,7 @@ import {
   useSignal,
 } from "kaioken"
 import { ReactionEmoji, REACTION_EMOJIS } from "shared"
-import { messageListElement, messages } from "./state"
+import { messageListElement, messages } from "$/state"
 
 type EmojiListProps = {
   messageId: string

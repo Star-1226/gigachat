@@ -1,14 +1,10 @@
 import { Derive, Portal, useMemo, useRef, useViewTransition } from "kaioken"
 import { className as cls } from "kaioken/utils"
 import { ReactionEmoji } from "shared"
-import {
-  sendMessageReactionDelete,
-  sendMessageReaction,
-} from "../../api/handlers"
-import { SmilePlusIcon } from "../../icons/SmilePlusIcon"
-import { username } from "../../state"
-import { emojiPickerMessageId, messages } from "./state"
-import { ClientChatMessage, ClientReaction } from "./types"
+import { sendMessageReactionDelete, sendMessageReaction } from "$/api/handlers"
+import { username, emojiPickerMessageId, messages } from "$/state"
+import { ClientChatMessage, ClientReaction } from "$/types"
+import { SmilePlusIcon } from "$/icons/SmilePlusIcon"
 import { EmojiPicker } from "./EmojiPicker"
 
 type MessageReactionsProps = {

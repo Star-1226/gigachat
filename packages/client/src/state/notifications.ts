@@ -1,5 +1,7 @@
 import { signal } from "kaioken"
 
+export const notifications = new Map<string, Notification>()
+
 const permission = signal<NotificationPermission>(Notification.permission)
 
 export function prepareNotifications() {
@@ -22,7 +24,6 @@ export function prepareNotifications() {
   }
 }
 
-export const notifications = new Map<string, Notification>()
 export function notify(
   id: string,
   title: string,
