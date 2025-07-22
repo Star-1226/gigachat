@@ -6,10 +6,10 @@ import {
   useRef,
   useSignal,
 } from "kaioken"
-import { ReactionEmoji, REACTION_EMOJIS } from "shared"
+import { type ReactionEmoji, REACTION_EMOJIS } from "shared"
 import { messageListElement, messages } from "$/state"
 
-type EmojiListProps = {
+type EmojiPickerProps = {
   messageId: string
   onEmojiSelect: (kind: ReactionEmoji) => void
   dismiss: (e: Event) => void
@@ -21,7 +21,7 @@ export function EmojiPicker({
   onEmojiSelect,
   dismiss,
   anchorRef,
-}: EmojiListProps) {
+}: EmojiPickerProps) {
   const ref = useRef<HTMLDivElement>(null)
   useClickOutside(ref, dismiss, {
     ignore: [anchorRef],

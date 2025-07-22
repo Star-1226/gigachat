@@ -1,18 +1,18 @@
 import { useAppContext, useEffect } from "kaioken"
-import { MessageList } from "./MessageList"
-import { MessageForm } from "./MessageForm"
-import { UsersList } from "./UsersList"
+import { MessageList } from "$/components/Chat/MessageList"
+import { MessageForm } from "$/components/Chat/MessageForm"
+import { UsersList } from "$/components/Chat/UsersList"
 import {
   notify,
   prepareNotifications,
-  onEventSourceMessage,
+  onSSE,
   messageListElement,
   messages,
   unreadMessages,
   users,
 } from "$/state"
 
-export function Chat() {
+export function ChatScreen() {
   const ctx = useAppContext()
 
   const scrollToBottom = () => {
@@ -25,7 +25,7 @@ export function Chat() {
   useEffect(prepareNotifications, [])
 
   useEffect(() => {
-    return onEventSourceMessage((data) => {
+    return onSSE((data) => {
       switch (data.type) {
         case "message":
           messages.value = [...messages.peek(), data.message]

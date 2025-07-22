@@ -1,4 +1,4 @@
-import { API_URL } from "../constants"
+import { API_URL } from "$/constants"
 import { ClientChatMessage } from "$/types"
 import { ChatMessageDTO, Reaction, ReactionDTO } from "shared"
 

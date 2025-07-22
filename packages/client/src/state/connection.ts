@@ -1,7 +1,7 @@
 import { signal } from "kaioken"
 import { API_URL } from "../constants"
 import { authenticate } from "../api/handlers"
-import { PROTOCOL_VERSION, SSEMessageWithVersion } from "shared"
+import { PROTOCOL_VERSION, SSEMessage, SSEMessageWithVersion } from "shared"
 
 export enum ConnectionState {
   Idle,
@@ -14,14 +14,12 @@ export const connectionError = signal<string | null>(null)
 export const username = signal<string>("")
 export const eventSource = signal<EventSource | null>(null)
 
-const incomingMsgQueue = [] as SSEMessageWithVersion[]
+const incomingMsgQueue = [] as SSEMessage[]
 const msgHandler = {
-  current: null as ((event: SSEMessageWithVersion) => void) | null,
+  current: null as ((event: SSEMessage) => void) | null,
 }
 
-export function onEventSourceMessage(
-  callback: (event: SSEMessageWithVersion) => void
-) {
+export function onSSE(callback: (event: SSEMessage) => void) {
   msgHandler.current = callback
   if (incomingMsgQueue.length > 0) {
     incomingMsgQueue.forEach((e) => callback(e))

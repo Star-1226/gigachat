@@ -1,4 +1,4 @@
-import { ElementProps } from "kaioken"
+import type { ElementProps } from "kaioken"
 
 export function SmilePlusIcon(props: ElementProps<"svg">) {
   return (
