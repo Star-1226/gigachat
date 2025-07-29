@@ -1,4 +1,7 @@
-import type { SSEStreamingApi } from "hono/streaming"
+import type {
+  SSEStreamingApi,
+  SSEMessage as HonoSSEMessage,
+} from "hono/streaming"
 import {
   MESSAGE_EXPIRATION_MS,
   PROTOCOL_VERSION,
@@ -16,18 +19,6 @@ type Connection = SSEStreamingApi
 export type UserData = {
   name: string
   onRemoved: () => void
-}
-
-function formatMessage<T extends SSEMessage>(
-  message: T
-): { data: string; event: "message" } {
-  return {
-    data: JSON.stringify({
-      ...message,
-      v: PROTOCOL_VERSION,
-    } satisfies SSEMessageWithVersion),
-    event: "message",
-  }
 }
 
 export class ChatService {
@@ -70,14 +61,14 @@ export class ChatService {
     this.#namesToUserData.set(name, userData)
 
     connection.writeSSE(
-      formatMessage({
+      this.formatMessage({
         type: "messages",
         messages: this.#messages,
       })
     )
 
     connection.writeSSE(
-      formatMessage({
+      this.formatMessage({
         type: "users",
         users: Array.from(this.#namesToUserData.keys()),
       })
@@ -182,18 +173,28 @@ export class ChatService {
   }
 
   private broadcast(payload: SSEMessage) {
-    const msg = formatMessage(payload)
+    const msg = this.formatMessage(payload)
     this.#connectionsToUserData.forEach((_, connection) => {
       connection.writeSSE(msg)
     })
   }
 
   private broadcastWithExclude(exclude: string, payload: SSEMessage) {
-    const msg = formatMessage(payload)
+    const msg = this.formatMessage(payload)
     this.#connectionsToUserData.forEach((data, connection) => {
       if (data.name === exclude) return
       connection.writeSSE(msg)
     })
+  }
+
+  private formatMessage(message: SSEMessage): HonoSSEMessage {
+    return {
+      data: JSON.stringify({
+        ...message,
+        v: PROTOCOL_VERSION,
+      } satisfies SSEMessageWithVersion),
+      event: "message",
+    }
   }
 }
 

@@ -1,3 +1,25 @@
+export function randomName() {
+  return `${
+    NAME_PARTS.adjectives[
+      Math.floor(Math.random() * NAME_PARTS.adjectives.length)
+    ]
+  }${NAME_PARTS.nouns[Math.floor(Math.random() * NAME_PARTS.nouns.length)]}`
+}
+
+export function randomGreeting(name: string) {
+  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)].replace(
+    "%s",
+    `@${name}`
+  )
+}
+
+export function randomFarewell(name: string) {
+  return FAREWELLS[Math.floor(Math.random() * FAREWELLS.length)].replace(
+    "%s",
+    `@${name}`
+  )
+}
+
 const NAME_PARTS = {
   adjectives: [
     "Sad",
@@ -176,25 +198,3 @@ const FAREWELLS = [
   "Poof. %s disappeared.",
   "%s left us on read. Typical.",
 ]
-
-export function randomName() {
-  return `${
-    NAME_PARTS.adjectives[
-      Math.floor(Math.random() * NAME_PARTS.adjectives.length)
-    ]
-  }${NAME_PARTS.nouns[Math.floor(Math.random() * NAME_PARTS.nouns.length)]}`
-}
-
-export function randomGreeting(name: string) {
-  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)].replace(
-    "%s",
-    `@${name}`
-  )
-}
-
-export function randomFarewell(name: string) {
-  return FAREWELLS[Math.floor(Math.random() * FAREWELLS.length)].replace(
-    "%s",
-    `@${name}`
-  )
-}
