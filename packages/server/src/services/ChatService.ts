@@ -4,7 +4,7 @@ import {
   PROTOCOL_VERSION,
   SERVER_USER_NAME,
   type ChatMessage,
-  type ChatMessageDTO,
+  type GigaAPI,
   type Reaction,
   type ReactionEmoji,
   type SSEMessage,
@@ -88,7 +88,7 @@ export class ChatService {
       id: name,
     })
 
-    this.addMessage(SERVER_USER_NAME, { content: randomGreeting(name) })
+    this.createMessage(SERVER_USER_NAME, { content: randomGreeting(name) })
   }
 
   removeUser(connection: Connection) {
@@ -98,11 +98,11 @@ export class ChatService {
     this.#connectionsToUserData.delete(connection)
     this.#namesToUserData.delete(name)
     this.broadcast({ type: "-user", id: name })
-    this.addMessage(SERVER_USER_NAME, { content: randomFarewell(name) })
+    this.createMessage(SERVER_USER_NAME, { content: randomFarewell(name) })
     onRemoved()
   }
 
-  addMessage(name: string, dto: ChatMessageDTO) {
+  createMessage(name: string, dto: GigaAPI["/chat"]["POST"]["in"]) {
     const message: ChatMessage = {
       id: crypto.randomUUID(),
       from: name,
@@ -122,7 +122,7 @@ export class ChatService {
     return message
   }
 
-  reactToMessage(
+  createReaction(
     userData: UserData,
     messageId: ChatMessage["id"],
     reactionKind: ReactionEmoji
@@ -151,7 +151,7 @@ export class ChatService {
     return [null, reaction]
   }
 
-  removeMessageReaction(
+  deleteReaction(
     userData: UserData,
     messageId: ChatMessage["id"],
     reactionKind: ReactionEmoji

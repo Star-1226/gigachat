@@ -99,7 +99,7 @@ function MessageUserReferenceButton({
 }: MessageUserReferenceButtonProps) {
   const isOffline = useComputed(() => !users.value.includes(username))
   const className = useComputed(() => {
-    const color = isOffline.value ? "text-neutral-500" : "text-violet-400"
+    const color = isOffline.value ? "text-neutral-400" : "text-violet-400"
     return `${color} font-medium transition-colors`
   })
   const title = useComputed(() => {

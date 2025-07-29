@@ -1,11 +1,10 @@
 import { useTextareaAutoSize } from "@kaioken-core/hooks"
 import { useRef, useSignal, useComputed, useCallback } from "kaioken"
 import { MAX_MESSAGE_CHARS } from "shared"
-import { sendMessage } from "$/api/handlers"
 import { SendIcon } from "$/icons/SendIcon"
 import { Button } from "../Button"
-import { formElement, messages, textAreaElement, username } from "$/state"
-import { ClientChatMessage } from "$/types"
+import { formElement, textAreaElement } from "$/state"
+import createMessage from "$/actions/message.create"
 
 type MessageFormProps = {
   onMessageAdded: () => void
@@ -34,37 +33,10 @@ export function MessageForm({ onMessageAdded }: MessageFormProps) {
     if (isSubmitDisabled.peek()) return
 
     const content = inputText.peek().trim()
-    const localId = crypto.randomUUID()
-
-    const temp: ClientChatMessage = {
-      id: "",
-      content,
-      timestamp: Date.now(),
-      from: username.peek(),
-      optimistic: true,
-      reactions: [],
-      localId,
-    }
-
-    messages.value = [...messages.peek(), temp]
     inputText.value = ""
     textAreaCtrls.update()
     onMessageAdded()
-
-    try {
-      const { message } = await sendMessage({ content })
-      messages.value = messages.peek().map<ClientChatMessage>((item) => {
-        if (item.localId === localId) {
-          return { ...message, localId } satisfies ClientChatMessage
-        }
-        return item
-      })
-    } catch (error) {
-      console.error("sendMessage", error)
-      messages.value = messages
-        .peek()
-        .filter((message) => message.localId !== localId)
-    }
+    createMessage(content)
   }
 
   const bindTextAreaRef = useCallback((el: HTMLTextAreaElement | null) => {

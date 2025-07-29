@@ -2,7 +2,7 @@ import { Hono } from "hono"
 import {
   validateChatMessageDTO,
   validateReactionDTO,
-  type ReactionDTO,
+  type GigaAPI,
 } from "shared"
 import { parseAuthCookie, authParserMiddleware } from "../auth.js"
 import { isProd } from "../env.js"
@@ -28,7 +28,7 @@ router.get("/auth", async (c) => {
     )
   }
 
-  return c.json({ name })
+  return c.json({ name } satisfies GigaAPI["/auth"]["GET"]["out"])
 })
 
 router.post("/chat", authParserMiddleware, async (c) => {
@@ -40,12 +40,12 @@ router.post("/chat", authParserMiddleware, async (c) => {
     return c.json({ status: err })
   }
 
-  const message = ChatService.addMessage(user.name, dto)
-  return c.json({ message })
+  const message = ChatService.createMessage(user.name, dto)
+  return c.json({ message } satisfies GigaAPI["/chat"]["POST"]["out"])
 })
 
 const reactionParserMiddleware = createMiddleware<{
-  Variables: { dto: ReactionDTO }
+  Variables: { dto: GigaAPI["/reaction"]["POST"]["in"] }
 }>(async (c, next) => {
   const body = await c.req.json()
   const [err, dto] = validateReactionDTO(body)
@@ -62,7 +62,7 @@ router
   .post(async (c) => {
     const user = c.get("user"),
       dto = c.get("dto")
-    const [reactionErr, reaction] = ChatService.reactToMessage(
+    const [reactionErr, reaction] = ChatService.createReaction(
       user,
       dto.messageId,
       dto.kind
@@ -71,15 +71,17 @@ router
       c.status(400)
       return c.json({ status: reactionErr })
     }
-    return c.json({ reaction })
+    return c.json({ reaction } satisfies GigaAPI["/reaction"]["POST"]["out"])
   })
   .delete(async (c) => {
     const user = c.get("user"),
       dto = c.get("dto")
 
-    ChatService.removeMessageReaction(user, dto.messageId, dto.kind)
+    ChatService.deleteReaction(user, dto.messageId, dto.kind)
 
-    return c.json({ status: "OK" })
+    return c.json({
+      status: "OK",
+    } satisfies GigaAPI["/reaction"]["DELETE"]["out"])
   })
 
 export default router

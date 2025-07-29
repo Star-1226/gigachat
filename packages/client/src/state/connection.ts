@@ -1,7 +1,7 @@
 import { signal } from "kaioken"
-import { API_URL } from "../constants"
-import { authenticate } from "../api/handlers"
+import { BASE_URL } from "../constants"
 import { PROTOCOL_VERSION, SSEMessage, SSEMessageWithVersion } from "shared"
+import { GET } from "$/api"
 
 export enum ConnectionState {
   Idle,
@@ -39,7 +39,7 @@ export async function connect(transition: (callback: () => void) => void) {
 
   try {
     console.log("Authenticating...")
-    const { name } = await authenticate()
+    const { name } = await GET("/auth")
     username.value = name
     console.log("Authenticated.")
   } catch (error) {
@@ -51,7 +51,7 @@ export async function connect(transition: (callback: () => void) => void) {
   }
 
   console.log("Connecting to SSE...")
-  const evtSrc = (eventSource.value = new EventSource(API_URL + "/sse", {
+  const evtSrc = (eventSource.value = new EventSource(BASE_URL + "/sse", {
     withCredentials: true,
   }))
 

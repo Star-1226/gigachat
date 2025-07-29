@@ -1,7 +1,7 @@
-let api = ""
+let baseUrl = ""
 if (import.meta.env.DEV) {
-  api = `http://${window.location.hostname}:8787`
+  baseUrl = `http://${window.location.hostname}:8787`
 } else {
-  api = ""
+  baseUrl = ""
 }
-export const API_URL = api
+export const BASE_URL = baseUrl

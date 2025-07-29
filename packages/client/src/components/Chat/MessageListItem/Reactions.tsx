@@ -13,7 +13,9 @@ import { SmilePlusIcon } from "$/icons/SmilePlusIcon"
 import { username, emojiPickerMessageId } from "$/state"
 import { MessageListItemContext } from "./context"
 import { EmojiPicker } from "./EmojiPicker"
-import { handleReactionClick } from "./actions"
+import { ClientChatMessage } from "$/types"
+import createReaction from "$/actions/reaction.create"
+import deleteReaction from "$/actions/reaction.delete"
 
 export function Reactions() {
   const message = useContext(MessageListItemContext)
@@ -66,7 +68,10 @@ export function Reactions() {
               <EmojiPicker
                 messageId={message.id}
                 anchorRef={btnRef}
-                onEmojiSelect={(kind) => handleReactionClick(message, kind)}
+                onEmojiSelect={(kind) => {
+                  emojiPickerMessageId.value = null
+                  toggleReaction(message, kind)
+                }}
                 dismiss={(e) => {
                   /**
                    * the clickoutside handler already ignores btnRef.
@@ -87,7 +92,9 @@ export function Reactions() {
         }
       </Derive>
       <ul className="flex flex-wrap gap-2">
-        {Object.entries(messageReactions.counts).map(([kind, count]) => {
+        {(
+          Object.entries(messageReactions.counts) as [ReactionEmoji, number][]
+        ).map(([kind, count]) => {
           const selfReaction = messageReactions.self.find(
             (r) => r.kind === kind
           )
@@ -103,9 +110,7 @@ export function Reactions() {
                       }`
                     : "border-white/5 bg-white/2.5 hover:bg-white/7.5"
                 )}
-                onclick={() =>
-                  handleReactionClick(message, kind as ReactionEmoji)
-                }
+                onclick={() => toggleReaction(message, kind)}
               >
                 <span className="text-lg">{kind}</span>
                 <span className="text-xs font-medium">{count}</span>
@@ -116,4 +121,14 @@ export function Reactions() {
       </ul>
     </div>
   )
+}
+
+function toggleReaction(message: ClientChatMessage, kind: ReactionEmoji) {
+  const existingReaction = message.reactions.find(
+    (reaction) => reaction.kind === kind && reaction.from === username.peek()
+  )
+  if (!existingReaction) {
+    return createReaction(message, kind)
+  }
+  return deleteReaction(message, kind, existingReaction)
 }
