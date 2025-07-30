@@ -7,8 +7,10 @@ import {
   PROTOCOL_VERSION,
   SERVER_USER_NAME,
   type ChatMessage,
+  type ChatMessageDTO,
   type GigaAPI,
   type Reaction,
+  type ReactionDTO,
   type ReactionEmoji,
   type SSEMessage,
   type SSEMessageWithVersion,
@@ -93,11 +95,11 @@ export class ChatService {
     onRemoved()
   }
 
-  createMessage(name: string, dto: GigaAPI["/chat"]["POST"]["in"]) {
+  createMessage(from: string, { content }: ChatMessageDTO) {
     const message: ChatMessage = {
       id: crypto.randomUUID(),
-      from: name,
-      content: dto.content,
+      from,
+      content,
       timestamp: Date.now(),
       reactions: [],
     }
@@ -105,7 +107,7 @@ export class ChatService {
 
     setTimeout(() => this.removeMessage(message.id), MESSAGE_EXPIRATION_MS)
 
-    this.broadcastWithExclude(name, {
+    this.broadcastWithExclude(from, {
       type: "message",
       message,
     })
@@ -115,18 +117,16 @@ export class ChatService {
 
   createReaction(
     userData: UserData,
-    messageId: ChatMessage["id"],
-    reactionKind: ReactionEmoji
+    { messageId, kind }: ReactionDTO
   ): [string, null] | [null, Reaction] {
     const message = this.#messages.find((message) => message.id === messageId)
     if (!message) return ["Not found", null]
 
-    const reaction: Reaction = { kind: reactionKind, from: userData.name }
+    const reaction: Reaction = { kind, from: userData.name }
 
     if (
       message.reactions.some(
-        (reaction) =>
-          reaction.from === userData.name && reaction.kind === reactionKind
+        (reaction) => reaction.from === userData.name && reaction.kind === kind
       )
     ) {
       return [null, reaction]
@@ -142,17 +142,13 @@ export class ChatService {
     return [null, reaction]
   }
 
-  deleteReaction(
-    userData: UserData,
-    messageId: ChatMessage["id"],
-    reactionKind: ReactionEmoji
-  ) {
+  deleteReaction(userData: UserData, { messageId, kind }: ReactionDTO) {
     const message = this.#messages.find((message) => message.id === messageId)
     if (!message) return
 
     let reaction: Reaction | undefined
     message.reactions = message.reactions.filter((item) => {
-      if (item.from === userData.name && item.kind === reactionKind) {
+      if (item.from === userData.name && item.kind === kind) {
         reaction = item
         return false
       }

@@ -45,7 +45,7 @@ router.post("/chat", authParserMiddleware, async (c) => {
 })
 
 const reactionParserMiddleware = createMiddleware<{
-  Variables: { dto: GigaAPI["/reaction"]["POST"]["in"] }
+  Variables: { dto: GigaAPI["/reaction"]["POST" | "DELETE"]["in"] }
 }>(async (c, next) => {
   const body = await c.req.json()
   const [err, dto] = validateReactionDTO(body)
@@ -62,11 +62,7 @@ router
   .post(async (c) => {
     const user = c.get("user"),
       dto = c.get("dto")
-    const [reactionErr, reaction] = ChatService.createReaction(
-      user,
-      dto.messageId,
-      dto.kind
-    )
+    const [reactionErr, reaction] = ChatService.createReaction(user, dto)
     if (reactionErr !== null) {
       c.status(400)
       return c.json({ status: reactionErr })
@@ -77,7 +73,7 @@ router
     const user = c.get("user"),
       dto = c.get("dto")
 
-    ChatService.deleteReaction(user, dto.messageId, dto.kind)
+    ChatService.deleteReaction(user, dto)
 
     return c.json({
       status: "OK",
