@@ -1,4 +1,3 @@
-import { useClickOutside } from "@kaioken-core/hooks"
 import {
   StyleObject,
   useLayoutEffect,
@@ -6,6 +5,7 @@ import {
   useRef,
   useSignal,
 } from "kaioken"
+import { useClickOutside } from "@kaioken-core/hooks"
 import { type ReactionEmoji, REACTION_EMOJIS } from "shared"
 import { messageListElement, messages } from "$/state"
 

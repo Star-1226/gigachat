@@ -1,7 +1,7 @@
 import { useContext } from "kaioken"
+import { username } from "$/state"
 import { addUserRefToTextArea } from "../utils"
 import { MessageListItemContext } from "./context"
-import { username } from "$/state"
 
 export function Header() {
   const message = useContext(MessageListItemContext)

@@ -8,14 +8,15 @@ import {
 } from "kaioken"
 import { className as cls } from "kaioken/utils"
 import type { ReactionEmoji } from "shared"
-
-import { SmilePlusIcon } from "$/icons/SmilePlusIcon"
 import { username, emojiPickerMessageId } from "$/state"
-import { MessageListItemContext } from "./context"
-import { EmojiPicker } from "./EmojiPicker"
 import { ClientChatMessage } from "$/types"
+
 import createReaction from "$/actions/reaction.create"
 import deleteReaction from "$/actions/reaction.delete"
+
+import { MessageListItemContext } from "./context"
+import { SmilePlusIcon } from "$/icons/SmilePlusIcon"
+import { EmojiPicker } from "./EmojiPicker"
 
 export function Reactions() {
   const message = useContext(MessageListItemContext)

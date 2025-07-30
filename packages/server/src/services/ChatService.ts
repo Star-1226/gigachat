@@ -8,10 +8,8 @@ import {
   SERVER_USER_NAME,
   type ChatMessage,
   type ChatMessageDTO,
-  type GigaAPI,
   type Reaction,
   type ReactionDTO,
-  type ReactionEmoji,
   type SSEMessage,
   type SSEMessageWithVersion,
 } from "shared"

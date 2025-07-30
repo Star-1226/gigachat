@@ -6,6 +6,7 @@ import {
   messages,
   username,
 } from "$/state"
+
 import MessageListItem from "./MessageListItem"
 
 export function MessageList() {

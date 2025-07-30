@@ -1,6 +1,6 @@
+import type { Context, HonoRequest } from "hono"
 import { createMiddleware } from "hono/factory"
 import type { StatusCode } from "hono/utils/http-status"
-import type { Context, HonoRequest } from "hono"
 import ChatService, { type UserData } from "./services/ChatService.js"
 import { isRateLimited } from "./rate-limiting.js"
 

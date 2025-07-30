@@ -1,5 +1,5 @@
-import { BASE_URL } from "$/constants"
 import { GigaAPI } from "shared"
+import { BASE_URL } from "$/constants"
 
 type GigaEndpoint = keyof GigaAPI & {}
 

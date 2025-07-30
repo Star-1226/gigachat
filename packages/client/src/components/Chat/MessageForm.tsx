@@ -1,10 +1,11 @@
 import { useTextareaAutoSize } from "@kaioken-core/hooks"
 import { useRef, useSignal, useComputed, useCallback } from "kaioken"
 import { MAX_MESSAGE_CHARS } from "shared"
-import { SendIcon } from "$/icons/SendIcon"
-import { Button } from "../Button"
 import { formElement, textAreaElement } from "$/state"
 import createMessage from "$/actions/message.create"
+
+import { SendIcon } from "$/icons/SendIcon"
+import { Button } from "../Button"
 
 type MessageFormProps = {
   onMessageAdded: () => void

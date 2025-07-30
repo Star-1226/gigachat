@@ -1,13 +1,13 @@
 import { Hono } from "hono"
+import { createMiddleware } from "hono/factory"
 import {
   validateChatMessageDTO,
   validateReactionDTO,
   type GigaAPI,
 } from "shared"
+import ChatService from "../services/ChatService.js"
 import { parseAuthCookie, authParserMiddleware } from "../auth.js"
 import { isProd } from "../env.js"
-import ChatService from "../services/ChatService.js"
-import { createMiddleware } from "hono/factory"
 
 const router = new Hono().basePath("/api")
 

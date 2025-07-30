@@ -1,7 +1,4 @@
 import { useAppContext, useEffect } from "kaioken"
-import { MessageList } from "$/components/Chat/MessageList"
-import { MessageForm } from "$/components/Chat/MessageForm"
-import { UsersList } from "$/components/Chat/UsersList"
 import {
   notify,
   prepareNotifications,
@@ -11,6 +8,10 @@ import {
   unreadMessages,
   users,
 } from "$/state"
+
+import { MessageList } from "$/components/Chat/MessageList"
+import { MessageForm } from "$/components/Chat/MessageForm"
+import { UsersList } from "$/components/Chat/UsersList"
 
 export function ChatScreen() {
   const ctx = useAppContext()

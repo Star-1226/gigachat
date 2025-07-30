@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import { streamSSE } from "hono/streaming"
-import { parseAuthCookie } from "../auth.js"
 import ChatService from "../services/ChatService.js"
+import { parseAuthCookie } from "../auth.js"
 
 const router = new Hono().basePath("/sse")
 

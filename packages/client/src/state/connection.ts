@@ -1,6 +1,6 @@
 import { signal } from "kaioken"
-import { BASE_URL } from "../constants"
 import { PROTOCOL_VERSION, SSEMessage, SSEMessageWithVersion } from "shared"
+import { BASE_URL } from "$/constants"
 import { GET } from "$/api"
 
 export enum ConnectionState {

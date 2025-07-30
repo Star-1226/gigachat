@@ -1,5 +1,5 @@
-import { textAreaElement, formElement } from "$/state"
 import { MAX_MESSAGE_CHARS } from "shared"
+import { textAreaElement, formElement } from "$/state"
 
 export function addUserRefToTextArea(username: string) {
   const txtAreaEl = textAreaElement.peek(),
