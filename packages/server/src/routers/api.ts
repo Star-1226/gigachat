@@ -58,7 +58,7 @@ const reactionParserMiddleware = createMiddleware<{
 })
 
 router
-  .use("/reaction", reactionParserMiddleware, authParserMiddleware)
+  .use("/reaction", authParserMiddleware, reactionParserMiddleware)
   .post(async (c) => {
     const user = c.get("user"),
       dto = c.get("dto")
