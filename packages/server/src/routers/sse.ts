@@ -14,22 +14,23 @@ router.get("/", async (c) => {
   return streamSSE(
     c,
     async (stream) => {
-      stream.onAbort(() => {
-        console.log("stream onAbort")
-      })
-      // apparently stream.onAbort doesn't work 🤔😔
+      // apparently stream.onAbort() doesn't work, so we have to do this workaround 🤔😔
       // https://github.com/honojs/hono/issues/1770
+      stream.onAbort(() => {})
       c.req.raw.signal.addEventListener("abort", () => {
         ChatService.removeUser(stream)
       })
-      let onRemovedCallback: () => void
-      const onRemovedPromise = new Promise<void>((resolve) => {
-        onRemovedCallback = resolve
+
+      const { promise: streamFinished, resolve: finishStream } =
+        Promise.withResolvers<void>()
+
+      ChatService.createUser({
+        name,
+        stream,
+        onRemoved: () => finishStream(),
       })
-      ChatService.createUser(stream, name, {
-        onRemoved: () => onRemovedCallback(),
-      })
-      await onRemovedPromise
+
+      await streamFinished
     },
     async (_err, stream) => ChatService.removeUser(stream)
   )

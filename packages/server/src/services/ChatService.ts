@@ -15,7 +15,7 @@ import {
 } from "shared"
 import { randomFarewell, randomGreeting, randomName } from "../random.js"
 
-type Connection = SSEStreamingApi
+type Stream = SSEStreamingApi
 export type UserData = {
   name: string
   onRemoved: () => void
@@ -23,15 +23,15 @@ export type UserData = {
 
 export class ChatService {
   #messages: ChatMessage[]
-  #connectionsToUserData: Map<Connection, UserData>
-  #namesToUserData: Map<string, UserData>
+  #streamToUser: Map<Stream, UserData>
+  #nameToUser: Map<string, UserData>
   #globalUserId: number
 
   constructor() {
     this.#messages = []
-    this.#connectionsToUserData = new Map()
-    this.#namesToUserData = new Map()
-    // this.#namesToUserData = new Map(
+    this.#streamToUser = new Map()
+    this.#nameToUser = new Map()
+    // this.#nameToUser = new Map(
     //   Array.from({ length: 100 }).map((asd, i) => [
     //     `user-${i}`,
     //     { name: `user-${i}`, onRemoved: () => {} },
@@ -45,32 +45,29 @@ export class ChatService {
   }
 
   getUser(name: string) {
-    return this.#namesToUserData.get(name)
+    return this.#nameToUser.get(name)
   }
 
-  createUser(
-    connection: Connection,
-    name: string,
-    opts: { onRemoved: () => void }
-  ) {
+  createUser(cfg: { name: string; stream: Stream; onRemoved: () => void }) {
+    const { name, stream, onRemoved } = cfg
     const userData: UserData = {
       name,
-      onRemoved: opts.onRemoved,
+      onRemoved,
     }
-    this.#connectionsToUserData.set(connection, userData)
-    this.#namesToUserData.set(name, userData)
+    this.#streamToUser.set(stream, userData)
+    this.#nameToUser.set(name, userData)
 
-    connection.writeSSE(
+    stream.writeSSE(
       this.formatMessage({
         type: "messages",
         messages: this.#messages,
       })
     )
 
-    connection.writeSSE(
+    stream.writeSSE(
       this.formatMessage({
         type: "users",
-        users: Array.from(this.#namesToUserData.keys()),
+        users: Array.from(this.#nameToUser.keys()),
       })
     )
 
@@ -82,12 +79,12 @@ export class ChatService {
     this.createMessage(SERVER_USER_NAME, { content: randomGreeting(name) })
   }
 
-  removeUser(connection: Connection) {
-    const data = this.#connectionsToUserData.get(connection)
+  removeUser(stream: Stream) {
+    const data = this.#streamToUser.get(stream)
     if (!data) return
     const { name, onRemoved } = data
-    this.#connectionsToUserData.delete(connection)
-    this.#namesToUserData.delete(name)
+    this.#streamToUser.delete(stream)
+    this.#nameToUser.delete(name)
     this.broadcast({ type: "-user", id: name })
     this.createMessage(SERVER_USER_NAME, { content: randomFarewell(name) })
     onRemoved()
@@ -145,9 +142,9 @@ export class ChatService {
     if (!message) return
 
     let reaction: Reaction | undefined
-    message.reactions = message.reactions.filter((item) => {
-      if (item.from === userData.name && item.kind === kind) {
-        reaction = item
+    message.reactions = message.reactions.filter((reaction) => {
+      if (reaction.from === userData.name && reaction.kind === kind) {
+        reaction = reaction
         return false
       }
       return true
@@ -168,16 +165,16 @@ export class ChatService {
 
   private broadcast(payload: SSEMessage) {
     const msg = this.formatMessage(payload)
-    this.#connectionsToUserData.forEach((_, connection) => {
-      connection.writeSSE(msg)
+    this.#streamToUser.forEach((_, stream) => {
+      stream.writeSSE(msg)
     })
   }
 
   private broadcastWithExclude(exclude: string, payload: SSEMessage) {
     const msg = this.formatMessage(payload)
-    this.#connectionsToUserData.forEach((data, connection) => {
-      if (data.name === exclude) return
-      connection.writeSSE(msg)
+    this.#streamToUser.forEach((user, stream) => {
+      if (user.name === exclude) return
+      stream.writeSSE(msg)
     })
   }
 
