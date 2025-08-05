@@ -4,18 +4,18 @@ import { ClientChatMessage } from "$/types"
 import { defineOptimisticAction } from "./action"
 
 const createMessage = defineOptimisticAction((content: string) => {
-  const localId = crypto.randomUUID()
+  const id = `temp-${crypto.randomUUID()}`
   const optimisticMessage: ClientChatMessage = {
-    id: "",
+    id,
     content,
     timestamp: Date.now(),
     from: username.peek(),
     reactions: [],
-    localId,
+    optimistic: true,
   }
   messages.value = [...messages.peek(), optimisticMessage]
   const revert = () => {
-    messages.value = messages.peek().filter((m) => m.localId !== localId)
+    messages.value = messages.peek().filter((m) => m.id !== id)
   }
 
   return {
@@ -23,11 +23,8 @@ const createMessage = defineOptimisticAction((content: string) => {
     execute: async () => {
       const { message } = await POST("/chat", { content })
 
-      messages.value = messages.peek().map<ClientChatMessage>((item) => {
-        if (item.localId === localId) {
-          return { ...message, localId }
-        }
-        return item
+      messages.value = messages.peek().map((item) => {
+        return item.id === id ? message : item
       })
     },
   }

@@ -32,6 +32,7 @@ export function MessageList() {
                 className="bg-[#1a1a1a]"
               >
                 <MessageListItem.Content />
+                <MessageListItem.Reactions />
               </MessageListItem.Root>
             )
           }
@@ -46,7 +47,7 @@ export function MessageList() {
           return (
             <MessageListItem.Root
               message={message}
-              key={message.localId ? `temp:${message.localId}` : message.id}
+              key={message.id}
               className={isSelfMessage ? "bg-[#212430]" : "bg-neutral-800"}
               style={style}
             >

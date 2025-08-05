@@ -6,11 +6,11 @@ import { defineOptimisticAction } from "./action"
 
 const createReaction = defineOptimisticAction(
   (message: ClientChatMessage, kind: ReactionEmoji) => {
-    const localId = crypto.randomUUID()
+    const id = `temp-${crypto.randomUUID()}`
     const temp: ClientReaction = {
+      id,
       kind,
       from: username.peek(),
-      localId,
       optimistic: true,
     }
     messages.value = messages.peek().map((item) => {
@@ -24,7 +24,7 @@ const createReaction = defineOptimisticAction(
         if (item.id === message.id) {
           return {
             ...item,
-            reactions: item.reactions.filter((r) => r.localId !== localId),
+            reactions: item.reactions.filter((r) => r.id !== id),
           }
         }
         return item
@@ -44,10 +44,7 @@ const createReaction = defineOptimisticAction(
             return {
               ...item,
               reactions: item.reactions.map((r) => {
-                if (r.localId === localId) {
-                  return reaction
-                }
-                return r
+                return r.id === id ? reaction : r
               }),
             }
           }
