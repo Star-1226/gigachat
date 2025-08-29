@@ -141,15 +141,11 @@ export class ChatService {
     const message = this.#messages.find((message) => message.id === messageId)
     if (!message) return
 
-    let reaction: Reaction | undefined
-    message.reactions = message.reactions.filter((reaction) => {
-      if (reaction.from === userData.name && reaction.kind === kind) {
-        reaction = reaction
-        return false
-      }
-      return true
-    })
-    if (!reaction) return
+    const matchedReactionIdx = message.reactions.findIndex(
+      (reaction) => reaction.from === userData.name && reaction.kind === kind
+    )
+    if (matchedReactionIdx === -1) return
+    const [reaction] = message.reactions.splice(matchedReactionIdx, 1)
 
     this.broadcastWithExclude(userData.name, {
       type: "-reaction",
