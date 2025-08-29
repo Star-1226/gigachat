@@ -1,11 +1,5 @@
-import {
-  StyleObject,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useSignal,
-} from "kaioken"
-import { useClickOutside } from "@kaioken-core/hooks"
+import { StyleObject, useLayoutEffect, useMemo, useRef, useSignal } from "kiru"
+import { useClickOutside } from "$/hooks/useClickOutside"
 import { type ReactionEmoji, REACTION_EMOJIS } from "shared"
 import { messageListElement, messages } from "$/state"
 
@@ -13,7 +7,7 @@ type EmojiPickerProps = {
   messageId: string
   onEmojiSelect: (kind: ReactionEmoji) => void
   dismiss: (e: Event) => void
-  anchorRef: Kaioken.RefObject<HTMLButtonElement>
+  anchorRef: Kiru.RefObject<HTMLButtonElement>
 }
 
 export function EmojiPicker({

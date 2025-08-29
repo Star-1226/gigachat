@@ -1,5 +1,5 @@
-import { ElementProps, unwrap } from "kaioken"
-import { className as cls } from "kaioken/utils"
+import { ElementProps, unwrap } from "kiru"
+import { className as cls } from "kiru/utils"
 
 import { ClientChatMessage } from "$/types"
 import { MessageListItemContext } from "./context"

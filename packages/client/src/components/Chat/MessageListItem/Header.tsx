@@ -1,13 +1,11 @@
-import { useContext } from "kaioken"
 import { username } from "$/state"
 import { addUserRefToTextArea } from "../utils"
-import { MessageListItemContext } from "./context"
+import { useMessageListItem } from "./context"
 
 export function Header() {
-  const message = useContext(MessageListItemContext)
-  if (!message) return console.error("Header: No message"), null
-
+  const message = useMessageListItem()
   const isSelfMessage = message.from === username.peek()
+
   return (
     <div className="w-full flex justify-between text-neutral-400">
       {isSelfMessage ? (

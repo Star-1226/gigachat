@@ -1,4 +1,4 @@
-import { signal } from "kaioken"
+import { signal } from "kiru"
 
 export const messageListElement = signal<HTMLUListElement | null>(null)
 export const textAreaElement = signal<HTMLTextAreaElement | null>(null)

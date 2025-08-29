@@ -1,4 +1,4 @@
-import type { ElementProps } from "kaioken"
+import type { ElementProps } from "kiru"
 
 export function CircleIcon(props: ElementProps<"svg">) {
   return (

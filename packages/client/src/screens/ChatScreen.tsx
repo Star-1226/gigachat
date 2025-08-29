@@ -1,4 +1,4 @@
-import { useAppContext, useEffect } from "kaioken"
+import { useEffect, nextIdle } from "kiru"
 import {
   notify,
   prepareNotifications,
@@ -14,10 +14,8 @@ import { MessageForm } from "$/components/Chat/MessageForm"
 import { UsersList } from "$/components/Chat/UsersList"
 
 export function ChatScreen() {
-  const ctx = useAppContext()
-
   const scrollToBottom = () => {
-    ctx.scheduler?.nextIdle(() => {
+    nextIdle(() => {
       const el = messageListElement.peek()
       el?.scrollTo(0, el.scrollHeight)
     })

@@ -1,4 +1,4 @@
-import { For, StyleObject } from "kaioken"
+import { For, StyleObject } from "kiru"
 import { SERVER_USER_NAME } from "shared"
 import {
   emojiPickerMessageId,

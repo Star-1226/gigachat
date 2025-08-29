@@ -1,4 +1,4 @@
-import { signal, watch } from "kaioken"
+import { signal, watch } from "kiru"
 import { ClientChatMessage } from "$/types"
 import { notifications } from "./notifications"
 

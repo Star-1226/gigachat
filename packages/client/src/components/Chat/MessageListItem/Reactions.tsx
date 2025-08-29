@@ -1,12 +1,12 @@
 import {
-  useContext,
   useViewTransition,
   useRef,
   useMemo,
   Derive,
   Portal,
-} from "kaioken"
-import { className as cls } from "kaioken/utils"
+  useCallback,
+} from "kiru"
+import { className as cls } from "kiru/utils"
 import type { ReactionEmoji } from "shared"
 import { username, emojiPickerMessageId } from "$/state"
 import { ClientChatMessage } from "$/types"
@@ -14,14 +14,12 @@ import { ClientChatMessage } from "$/types"
 import createReaction from "$/actions/reaction.create"
 import deleteReaction from "$/actions/reaction.delete"
 
-import { MessageListItemContext } from "./context"
+import { useMessageListItem } from "./context"
 import { SmilePlusIcon } from "$/icons/SmilePlusIcon"
 import { EmojiPicker } from "./EmojiPicker"
 
 export function Reactions() {
-  const message = useContext(MessageListItemContext)
-  if (!message) return console.error("Reactions: No message"), null
-
+  const message = useMessageListItem()
   const transition = useViewTransition()
   const btnRef = useRef<HTMLButtonElement>(null)
   const messageReactions = useMemo(() => {
@@ -39,6 +37,16 @@ export function Reactions() {
     }
   }, [message])
 
+  const onEmojiPickerClick = useCallback(() => {
+    transition(() => {
+      if (emojiPickerMessageId.peek() === message.id) {
+        emojiPickerMessageId.value = null
+        return
+      }
+      emojiPickerMessageId.value = message.id
+    })
+  }, [])
+
   return (
     <div className="flex gap-2">
       <button
@@ -50,15 +58,7 @@ export function Reactions() {
           "hover:text-neutral-200 focus:text-neutral-200"
         )}
         disabled={message.optimistic}
-        onclick={() => {
-          transition(() => {
-            if (emojiPickerMessageId.peek() === message.id) {
-              emojiPickerMessageId.value = null
-              return
-            }
-            emojiPickerMessageId.value = message.id
-          })
-        }}
+        onclick={onEmojiPickerClick}
       >
         <SmilePlusIcon />
       </button>

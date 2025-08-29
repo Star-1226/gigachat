@@ -1,4 +1,4 @@
-import { signal } from "kaioken"
+import { signal } from "kiru"
 
 export const notifications = new Map<string, Notification>()
 

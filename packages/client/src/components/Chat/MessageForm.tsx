@@ -1,9 +1,9 @@
-import { useTextareaAutoSize } from "@kaioken-core/hooks"
-import { useRef, useSignal, useComputed, useCallback } from "kaioken"
+import { useRef, useSignal, useComputed, useCallback } from "kiru"
 import { MAX_MESSAGE_CHARS } from "shared"
 import { formElement, textAreaElement } from "$/state"
 import createMessage from "$/actions/message.create"
 
+import { useTextareaAutoSize } from "$/hooks/useTextareaAutoSize"
 import { SendIcon } from "$/icons/SendIcon"
 import { Button } from "../Button"
 

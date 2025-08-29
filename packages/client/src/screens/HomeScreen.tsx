@@ -1,4 +1,4 @@
-import { useViewTransition } from "kaioken"
+import { useViewTransition } from "kiru"
 import {
   connectionState,
   ConnectionState,

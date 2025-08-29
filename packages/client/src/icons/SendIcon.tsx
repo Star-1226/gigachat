@@ -1,4 +1,4 @@
-import type { ElementProps } from "kaioken"
+import type { ElementProps } from "kiru"
 
 export function SendIcon(props: ElementProps<"svg">) {
   return (

@@ -15,10 +15,9 @@
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",
     "vite": "^7.0.4",
-    "vite-plugin-kaioken": "0.21.1"
+    "vite-plugin-kiru": "^0.26.0"
   },
   "dependencies": {
-    "@kaioken-core/hooks": "^0.1.0",
-    "kaioken": "0.43.0"
+    "kiru": "^0.48.2"
   }
 }

@@ -1,3 +1,3 @@
-Welcome to your new Kaioken CSR project!
+Welcome to your new Kiru CSR project!
 
-Visit [https://kaioken.dev](https://kaioken.dev) for more information.
+Visit [https://kirujs.dev](https://kirujs.dev) for more information.

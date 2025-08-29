@@ -1,12 +1,11 @@
-import { useContext, useMemo, useComputed } from "kaioken"
+import { useMemo, useComputed } from "kiru"
 import { username, users } from "$/state"
 import { ClientChatMessage } from "$/types"
 import { addUserRefToTextArea } from "../utils"
-import { MessageListItemContext } from "./context"
+import { useMessageListItem } from "./context"
 
 export function Content() {
-  const message = useContext(MessageListItemContext)
-  if (!message) return console.error("Content: No message"), null
+  const message = useMessageListItem()
   const formatted = useMemo(() => formatContent(message), [message])
 
   return (
@@ -18,7 +17,7 @@ export function Content() {
 
 function formatContent(message: ClientChatMessage) {
   const raw = message.content as string
-  const parts: JSX.Children[] = []
+  const parts: JSX.Children = []
 
   const selfRefStr = `@${username.peek()}`
   const mentionRegex = /@[\w]+#\d{4}/g

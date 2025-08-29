@@ -1,8 +1,8 @@
-import { useRef, Derive, For, useSignal } from "kaioken"
-import { useClickOutside } from "@kaioken-core/hooks"
+import { useRef, Derive, For, useSignal } from "kiru"
 import { username, otherUsers } from "$/state"
 import { addUserRefToTextArea } from "./utils"
 
+import { useClickOutside } from "$/hooks/useClickOutside"
 import { CircleIcon } from "$/icons/CircleIcon"
 import { Button } from "$/components/Button"
 

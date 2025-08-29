@@ -1,4 +1,4 @@
-import { signal } from "kaioken"
+import { signal } from "kiru"
 import { PROTOCOL_VERSION, SSEMessage, SSEMessageWithVersion } from "shared"
 import { BASE_URL } from "$/constants"
 import { GET } from "$/api"

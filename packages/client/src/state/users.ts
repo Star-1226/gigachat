@@ -1,4 +1,4 @@
-import { computed, signal } from "kaioken"
+import { computed, signal } from "kiru"
 import { username } from "./connection"
 
 export const users = signal<string[]>([])
