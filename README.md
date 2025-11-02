@@ -12,5 +12,5 @@ Development monorepo template for **gigachat**.
   - [client](https://github.com/LankyMoose/gigachat/blob/main/packages/client)
   - [shared](https://github.com/LankyMoose/gigachat/blob/main/packages/shared)
 - `sandbox`
-  - Contains example applications and random tidbits.
+  - Contains example applications and random .
 
